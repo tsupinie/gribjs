@@ -1,0 +1,221 @@
+/* dec_png_clone()
+ * based on dec_png() from g2clib (public domain)  by Steve Gilbert NCO/NCEP/NWS
+ *
+ * enc_png() from g2clib is limited to bit depth of 8, 16, 24, 32
+ *   and automnatically coverts bit_depth = ((int) (bit_depth + 7) / 8 ) * 8
+ * dec_png() assumes a bit depth of 8, 16, 24, 32, and nbytes=bit_depth/8
+ *
+ * the WMO grib2 specifications mention bit depth of 1, 2, 4, 8, 24, 32.
+ *    so that is why dep_png() will fail for bit_depth of 1, 2 and 4
+ *
+ * v1.0:  copied dec_png() from g2clib, called it dep_png_clone() to avoid name
+ *        conflict if also use g2clib
+ *
+ * 4/2021: v1.1  modification W. Ebisuzaki
+ *        need to check if grib2 definition of bit_depth is the same as from
+ *          decoding the png stream, otherwise silent bad decode
+ *        if differs, then delayed error
+ *	  changed char *cout to unsigned char *cout to be consistent with wgrib2
+ *        Now handles bit_depth of 1, 2 and 4 as well as 8, 16, 24 and 32.
+ * 
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <png.h>
+
+static unsigned char *bitstream;
+static int rbits, reg, n_bitstream;
+
+int add_bitstream(int t, int n_bits) {
+    unsigned int jmask;
+
+    if (n_bits > 16) {
+        add_bitstream(t >> 16, n_bits - 16);
+        n_bits = 16; 
+    }   
+    if (n_bits > 25) {
+        fprintf(stderr, "add_bitstream: n_bits = (%d)", n_bits);
+        return -1;
+    }
+    jmask = (1 << n_bits) - 1;
+    rbits += n_bits;
+    reg = (reg << n_bits) | (t & jmask);
+    while (rbits >= 8) {
+    *bitstream++ = (reg >> (rbits = rbits-8)) & 255;
+    n_bitstream++;
+    }   
+    return 0;
+}
+
+void init_bitstream(unsigned char *new_bitstream) {
+    bitstream = new_bitstream;
+    n_bitstream = reg = rbits = 0;
+    return;
+}
+
+void finish_bitstream(void) {
+    if (rbits) {
+        n_bitstream++;
+        *bitstream++ = (reg << (8-rbits)) & 255;
+        rbits = 0;
+    }
+    return;
+}
+
+struct png_stream {
+   unsigned char *stream_ptr;     /*  location to write PNG stream  */
+   int stream_len;               /*  number of bytes written       */
+};
+typedef struct png_stream png_stream;
+
+void user_read_data_clone(png_structp , png_bytep , png_size_t );
+
+void user_read_data_clone(png_structp png_ptr,png_bytep data, png_size_t length)
+/*
+        Custom read function used so that libpng will read a PNG stream
+        from memory instead of a file on disk.
+*/
+{
+     char *ptr;
+     int offset;
+     png_stream *mem;
+
+     mem=(png_stream *)png_get_io_ptr(png_ptr);
+     ptr=(void *)mem->stream_ptr;
+     offset=mem->stream_len;
+     memcpy(data,ptr+offset,length);
+     mem->stream_len += length;
+}
+
+
+
+int decode_png(unsigned char *pngbuf,int *width,int *height, unsigned char *cout, int *grib2_bit_depth, unsigned int ndata)
+{
+    int interlace,color,compres,filter,bit_depth;
+    int j,k, rowlen, tmp;
+    long int rowlen_bits;
+    int add_status;
+    png_structp png_ptr;
+    png_infop info_ptr,end_info;
+    png_bytepp row_pointers;
+    png_stream read_io_ptr;
+    png_uint_32 h32, w32;
+
+/*  check if stream is a valid PNG format   */
+
+    if ( png_sig_cmp(pngbuf,0,8) != 0) 
+       return (-3);
+
+/* create and initialize png_structs  */
+
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, 
+                                      NULL, NULL);
+    if (!png_ptr)
+       return (-1);
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr)
+    {
+       png_destroy_read_struct(&png_ptr,(png_infopp)NULL,(png_infopp)NULL);
+       return (-2);
+    }
+
+    end_info = png_create_info_struct(png_ptr);
+    if (!end_info)
+    {
+       png_destroy_read_struct(&png_ptr,(png_infopp)info_ptr,(png_infopp)NULL);
+       return (-2);
+    }
+
+/*     Set Error callback   */
+
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
+       png_destroy_read_struct(&png_ptr, &info_ptr,&end_info);
+       return (-3);
+    }
+
+/*    Initialize info for reading PNG stream from memory   */
+
+    read_io_ptr.stream_ptr=(png_voidp)pngbuf;
+    read_io_ptr.stream_len=0;
+
+/*    Set new custom read function    */
+
+    png_set_read_fn(png_ptr,(png_voidp)&read_io_ptr,(png_rw_ptr)user_read_data_clone);
+/*     png_init_io(png_ptr, fptr);   */
+
+/*     Read and decode PNG stream   */
+
+    png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+
+/*     Get pointer to each row of image data   */
+
+    row_pointers = png_get_rows(png_ptr, info_ptr);
+
+/*     Get image info, such as size, depth, colortype, etc...   */
+
+    // (void)png_get_IHDR(png_ptr, info_ptr, (png_uint_32 *)width, (png_uint_32 *)height,
+    (void)png_get_IHDR(png_ptr, info_ptr, &w32, &h32,
+               &bit_depth, &color, &interlace, &compres, &filter);
+
+    *height = h32;
+    *width = w32;
+    if ((unsigned int) h32 * (unsigned int) w32 > ndata) {
+        fprintf(stderr, "error: png decode: size of png grid too large\n");
+        return (-4);
+    }
+
+    if ( color == PNG_COLOR_TYPE_RGB ) {
+       bit_depth=24;
+    }
+    else if ( color == PNG_COLOR_TYPE_RGB_ALPHA ) {
+       bit_depth=32;
+    }
+
+    if (bit_depth != *grib2_bit_depth) {
+        fprintf(stderr, "warning: png bit depth error: expected bit depth is %d; value from libpng (%d) is used\n",
+            *grib2_bit_depth, bit_depth);
+        *grib2_bit_depth = bit_depth;
+    }
+
+/*     Copy image data to output string   */
+
+    /* get number of bytes per row used to store packed numbers */
+    rowlen =  png_get_rowbytes(png_ptr, info_ptr);
+
+    rowlen_bits = w32 * bit_depth;
+
+    if (rowlen_bits % 8 == 0) {
+#pragma omp parallel for private(j,k) schedule(static)
+        for (j = 0; j < h32; j++) {
+            for (k = 0; k < rowlen; k++) {
+                cout[j*rowlen+k]=*(row_pointers[j]+k);
+            }
+        }
+    }
+    else {
+        /* bitstream is set to *cout */
+        init_bitstream(cout);
+        for (j = 0; j < h32; j++) {
+            rowlen_bits = w32 * bit_depth;
+            k = 0;
+            while (rowlen_bits > 0) {
+                tmp = (int) *(row_pointers[j] + k++);
+                add_status = add_bitstream(tmp, rowlen_bits > 8 ? 8: rowlen_bits);
+                if (add_status != 0) return (-5);
+
+                rowlen_bits -= 8;
+            }
+        }
+        finish_bitstream();
+    }
+
+/*      Clean up   */
+
+    png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);
+    return 0;
+
+}
