@@ -1,2 +1,5 @@
 *.c.o
 *.wasm
+
+node_modules/
+public/*.grib2

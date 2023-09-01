@@ -1,32 +1,5 @@
 
-const fs = require('fs');
-const { pngDecoder } = require('./unpack');
-
-const INDICATOR_SECTION = [
-    ['header_marker', 's4'],
-    [null, 'ui2'],
-    ['grib_discipline', 'ui1'],
-    ['grib_edition', 'ui1'],
-    ['message_length', 'ui8'],
-];
-
-const IDENTIFICATION_SECTION = [
-    ['section_length', 'ui4'],
-    ['section_number', 'ui1'],
-    ['originating_center_id', 'ui2'],
-    ['originating_subcenter_id', 'ui2'],
-    ['grib_master_table_version', 'ui1'],
-    ['grib_local_table_version', 'ui1'],
-    ['reference_time_singificance', 'ui1'],
-    ['reference_year', 'ui2'],
-    ['reference_month', 'ui1'],
-    ['reference_day', 'ui1'],
-    ['reference_hour', 'ui1'],
-    ['reference_minute', 'ui1'],
-    ['reference_second', 'ui1'],
-    ['production_status', 'ui1'],
-    ['processed_data_type', 'ui1'],
-];
+//const { pngDecoder } = require('./unpack');
 
 const LOCAL_USE_SECTION = [
     ['section_length', 'ui4'],
@@ -129,54 +102,151 @@ const DATA_SECTION = [
     ['section_number', 'ui1'],
 ];
 
-function unpackStruct(buf, struct, offset) {
-    offset = offset === undefined ? 0 : offset;
+type Grib2InternalType = 'ui1' | 'ui2' | 'ui4' | 'ui8';
+type Grib2ContentSpec<T> = [keyof T, Grib2InternalType][];
+type Grib2Content<T> = Record<keyof T, number>;
 
+function unpackStruct<T>(buf: DataView, struct: Grib2ContentSpec<T>, offset: number): Grib2Content<T> {
     const data_types = {
         'ui1': () => {  
-            const val = buf.readUInt8(offset);
+            const val = buf.getUint8(offset);
             offset += 1;
             return val;
         },
         'ui2': () => {
-            const val = buf.readUInt16BE(offset);
+            const val = buf.getUint16(offset);
             offset += 2;
             return val;
         },
         'ui4': () => { 
-            const val = buf.readUInt32BE(offset);
+            const val = buf.getUint32(offset);
             offset += 4;
             return val;
         },
         'ui8': () => {
-            const val = buf.readBigUInt64BE(offset);
+            // split 64-bit number into two 32-bit (4-byte) parts
+            const left = buf.getUint32(offset);
+            const right = buf.getUint32(offset + 4);
+
+            // combine the two 32-bit values
+            const combined = 2 ** 32 * left + right;
+
+            if (!Number.isSafeInteger(combined))
+                console.warn(combined, "exceeds MAX_SAFE_INTEGER. Precision may be lost");
+
             offset += 8;
-            return val;
+            return combined;
         },
         'f4': () => {
-            const val = buf.readFloatBE(offset);
+            const val = buf.getFloat32(offset);
             offset += 4;
-            return val;
-        },
-        's': (len) => {
-            const val = buf.slice(offset, offset + len).toString();
-            offset += len;
             return val;
         }
     }
 
     return Object.fromEntries(struct.map(([name, dtype]) => {
-        let val;
-        if (dtype.startsWith('s')) {
-            const len = parseInt(dtype.slice(1));
-            val = data_types['s'](len);
-        }
-        else {
-            val = data_types[dtype]();
-        }
+        let val = data_types[dtype]();
 
         return [name, val];
-    }).filter(([name, val]) => name !== null));
+    })) as Grib2Content<T>;
+}
+
+function unpackUTF8String(buf: DataView, offset: number, length: number) {
+    return String.fromCharCode.apply(null, new Uint8Array(buf.buffer.slice(offset, offset + length)));
+}
+
+class Grib2Section {
+    section_length: number;
+    section_number: number;
+
+    constructor(contents: Grib2Content<Grib2Section>, expected_section_number: number) {
+        if (contents.section_number != expected_section_number) {
+            throw `Expected section ${expected_section_number}, but got ${contents.section_number} instead`;
+        }
+
+        this.section_length = contents.section_length;
+        this.section_number = contents.section_number;
+    }
+}
+
+class Grib2Section0 extends Grib2Section {
+    grib_discipline: number;
+    grib_edition: number;
+    message_length: number;
+
+    static content_spec: Grib2ContentSpec<Grib2Section0> = [
+        ['grib_discipline', 'ui1'],
+        ['grib_edition', 'ui1'],
+        ['message_length', 'ui8'],
+    ];
+
+    constructor(contents: Grib2Content<Grib2Section0>) {
+        super({section_length: 16, section_number: 0}, 0);
+
+        if (contents.grib_edition != 2) {
+            throw 'Only grib2 files are supported';
+        }
+
+        Grib2Section0.content_spec.slice(2).forEach(([key, dtype]) => {
+            this[key] = contents[key];
+        });
+    }
+
+    static unpack(buffer: DataView, offset: number) {
+        const marker = unpackUTF8String(buffer, offset, 4);
+
+        if (marker != 'GRIB') {
+            throw `Missing header marker`;
+        }
+
+        return new Grib2Section0(unpackStruct(buffer, Grib2Section0.content_spec, offset + 6));
+    }
+}
+
+class Grib2Section1 extends Grib2Section {
+    originating_center_id: number;
+    originating_subcenter_id: number;
+    grib_master_table_version: number;
+    grib_local_table_version: number;
+    reference_time_singificance: number;
+    reference_year: number;
+    reference_month: number;
+    reference_day: number;
+    reference_hour: number;
+    reference_minute: number;
+    reference_second: number;
+    production_status: number;
+    processed_data_type: number;
+
+    static content_spec: Grib2ContentSpec<Grib2Section1> = [
+        ['section_length', 'ui4'],
+        ['section_number', 'ui1'],
+        ['originating_center_id', 'ui2'],
+        ['originating_subcenter_id', 'ui2'],
+        ['grib_master_table_version', 'ui1'],
+        ['grib_local_table_version', 'ui1'],
+        ['reference_time_singificance', 'ui1'],
+        ['reference_year', 'ui2'],
+        ['reference_month', 'ui1'],
+        ['reference_day', 'ui1'],
+        ['reference_hour', 'ui1'],
+        ['reference_minute', 'ui1'],
+        ['reference_second', 'ui1'],
+        ['production_status', 'ui1'],
+        ['processed_data_type', 'ui1'],
+    ];
+
+    constructor(contents: Grib2Content<Grib2Section1>) {
+        super(contents, 1);
+
+        Grib2Section1.content_spec.slice(2).forEach(([key, dtype]) => {
+            this[key] = contents[key];
+        });
+    }
+
+    static unpack(buffer: DataView, offset: number) {
+        return new Grib2Section1(unpackStruct(buffer, Grib2Section1.content_spec, offset));
+    }
 }
 
 class Grib2File {
@@ -188,42 +258,27 @@ class Grib2Message {
 
     }
 
-    static async unpack(data) {
-        /*
-            Section 0
-        */
-        let offset = 0;
-        const ind_struct = unpackStruct(data, INDICATOR_SECTION, offset);
+    static async unpack(data: DataView, offset: number) {
 
-        if (ind_struct['header_marker'] != 'GRIB')
-            throw "'GRIB' header not found";
+        const sec0 = Grib2Section0.unpack(data, offset);
+        offset += sec0.section_length;
 
-        if (ind_struct['grib_edition'] != 2)
-            throw 'Only grib2 files are supported';
+        const sec1 = Grib2Section1.unpack(data, offset);
+        offset += sec1.section_length;
 
-        offset += 16;
+        console.log(sec0, sec1);
 
         /*
-            Section 1
-        */
-        const id_struct = unpackStruct(data, IDENTIFICATION_SECTION, offset);
-
-        if (id_struct['section_number'] != 1)
-            throw "Expected section 1, but didn't find it";
-
-        offset += id_struct['section_length'];
-
-        /*
-            Section 2
-        */
+        // Section 2
+        
         const lu_struct = unpackStruct(data, LOCAL_USE_SECTION, offset);
 
         if (lu_struct['section_number'] == 2) 
             offset += lu_struct['section_length'];
 
-        /*
-            Section 3
-        */
+
+        // Section 3
+
         const gd_struct = unpackStruct(data, GRID_DEFINITION_SECTION, offset);
 
         if (gd_struct['section_number'] != 3)
@@ -236,9 +291,8 @@ class Grib2Message {
 
         offset += gd_struct['section_length'];
 
-        /*
-            Section 4
-        */
+        
+        // Section 4
 
         const pd_struct = unpackStruct(data, PRODUCT_DEFINITION_SECTION, offset);
 
@@ -252,9 +306,7 @@ class Grib2Message {
 
         offset += pd_struct['section_length'];
 
-        /*
-            Section 5
-        */
+        // Section 5
 
         const dr_struct = unpackStruct(data, DATA_REPRESENTATION_SECTION, offset);
 
@@ -269,9 +321,7 @@ class Grib2Message {
 
         offset += dr_struct['section_length'];
 
-        /*
-            Section 6
-        */
+        // Section 6
 
         const bm_struct = unpackStruct(data, BITMAP_SECTION, offset);
 
@@ -280,9 +330,7 @@ class Grib2Message {
 
         offset += bm_struct['section_length'];
 
-        /*
-            Section 7
-        */
+        // Section 7
 
         const data_struct = unpackStruct(data, DATA_SECTION, offset);
 
@@ -299,17 +347,17 @@ class Grib2Message {
         const grid = new Float32Array(dr_struct['number_of_data_points']);
         decompressed.forEach((val, i) => grid[i] = (dr_template['reference_value'] + val * binary_scale_factor) / decimal_scale_factor);
 
-        console.log(grid.reduce((a, b) => Math.max(a, b)));
-
         offset += data_struct['section_length'];
 
         const end_marker = data.slice(offset, offset + 4).toString();
         if (end_marker != '7777')
             throw 'Missing GRIB end marker';
+        */
     }
 }
 
 (async () => {
-    const data = fs.readFileSync('/Users/tsupinie/data/mrms/MRMS_MergedReflectivityQCComposite_00.50_20230829-233640.grib2');
-    await Grib2Message.unpack(data);
+    const resp = await fetch('http://localhost:9090/MRMS_MergedReflectivityQCComposite_00.50_20230829-233640.grib2');
+    const data = new DataView(await resp.arrayBuffer());
+    await Grib2Message.unpack(data, 0);
 })();

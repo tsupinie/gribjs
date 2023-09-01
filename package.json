@@ -1,0 +1,19 @@
+{
+  "name": "gribjs",
+  "version": "0.1.0",
+  "description": "A Javascript GRIB2 decoder",
+  "main": "index.ts",
+  "scripts": {
+    "start": "webpack serve --open --mode=development",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tim Supinie <tsupinie@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  }
+}
