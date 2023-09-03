@@ -35,10 +35,20 @@ const g2_lambert_conformal_types = {
     oblate_earth_semiminor_axis_scale_factor: G2UInt1,
     oblate_earth_semiminor_axis_value: G2UInt4,
     ngrid_i: G2UInt4,
+    ngrid_j: G2UInt4,
     lat_first: G2UInt4,
     lon_first: G2UInt4,
     resolution_component_flags: G2UInt1,
     center_latitude: G2UInt4,
+    standard_longitude: G2UInt4,
+    grid_dx: G2UInt4,
+    grid_dy: G2UInt4,
+    projection_center_flag: G2UInt1,
+    scanning_mode_flag: G2UInt1,
+    standard_latitude_1: G2UInt4,
+    standard_latitude_2: G2UInt4,
+    south_pole_latitude: G2UInt4,
+    south_pole_longitude: G2UInt4
 }
 
 class Grib2LambertConformalGridDefinition extends Grib2Struct<typeof g2_lambert_conformal_types> {}
