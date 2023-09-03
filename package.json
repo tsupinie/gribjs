@@ -15,5 +15,8 @@
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "@types/emscripten": "^1.39.7"
   }
 }

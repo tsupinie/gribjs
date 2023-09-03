@@ -1,5 +1,4 @@
 
-//const { pngDecoder } = require('./unpack');
 import { unpackUTF8String } from './grib2base';
 import {g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker,
         g2_section5_unpacker, g2_section6_unpacker, g2_section7_unpacker} from './grib2section';

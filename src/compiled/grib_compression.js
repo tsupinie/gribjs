@@ -1,7 +1,7 @@
 
 var Module = (() => {
   var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
-  if (typeof __filename !== 'undefined') _scriptDir = _scriptDir || __filename;
+  
   return (
 function(moduleArg = {}) {
 
@@ -56,9 +56,9 @@ var quit_ = (status, toThrow) => {
 // Determine the runtime environment we are in. You can customize this by
 // setting the ENVIRONMENT setting at compile time (see settings.js).
 
-var ENVIRONMENT_IS_WEB = false;
+var ENVIRONMENT_IS_WEB = true;
 var ENVIRONMENT_IS_WORKER = false;
-var ENVIRONMENT_IS_NODE = true;
+var ENVIRONMENT_IS_NODE = false;
 var ENVIRONMENT_IS_SHELL = false;
 
 if (Module['ENVIRONMENT']) {
@@ -80,74 +80,6 @@ var read_,
     readBinary,
     setWindowTitle;
 
-if (ENVIRONMENT_IS_NODE) {
-  if (typeof process == 'undefined' || !process.release || process.release.name !== 'node') throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
-
-  var nodeVersion = process.versions.node;
-  var numericVersion = nodeVersion.split('.').slice(0, 3);
-  numericVersion = (numericVersion[0] * 10000) + (numericVersion[1] * 100) + (numericVersion[2].split('-')[0] * 1);
-  var minVersion = 160000;
-  if (numericVersion < 160000) {
-    throw new Error('This emscripten-generated code requires node v16.0.0 (detected v' + nodeVersion + ')');
-  }
-
-  // `require()` is no-op in an ESM module, use `createRequire()` to construct
-  // the require()` function.  This is only necessary for multi-environment
-  // builds, `-sENVIRONMENT=node` emits a static import declaration instead.
-  // TODO: Swap all `require()`'s with `import()`'s?
-  // These modules will usually be used on Node.js. Load them eagerly to avoid
-  // the complexity of lazy-loading.
-  var fs = require('fs');
-  var nodePath = require('path');
-
-  if (ENVIRONMENT_IS_WORKER) {
-    scriptDirectory = nodePath.dirname(scriptDirectory) + '/';
-  } else {
-    scriptDirectory = __dirname + '/';
-  }
-
-// include: node_shell_read.js
-read_ = (filename, binary) => {
-  // We need to re-wrap `file://` strings to URLs. Normalizing isn't
-  // necessary in that case, the path should already be absolute.
-  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-  return fs.readFileSync(filename, binary ? undefined : 'utf8');
-};
-
-readBinary = (filename) => {
-  var ret = read_(filename, true);
-  if (!ret.buffer) {
-    ret = new Uint8Array(ret);
-  }
-  assert(ret.buffer);
-  return ret;
-};
-
-readAsync = (filename, onload, onerror, binary = true) => {
-  // See the comment in the `read_` function.
-  filename = isFileURI(filename) ? new URL(filename) : nodePath.normalize(filename);
-  fs.readFile(filename, binary ? undefined : 'utf8', (err, data) => {
-    if (err) onerror(err);
-    else onload(binary ? data.buffer : data);
-  });
-};
-// end include: node_shell_read.js
-  if (!Module['thisProgram'] && process.argv.length > 1) {
-    thisProgram = process.argv[1].replace(/\\/g, '/');
-  }
-
-  arguments_ = process.argv.slice(2);
-
-  // MODULARIZE will export the module in the proper place outside, we don't need to export here
-
-  quit_ = (status, toThrow) => {
-    process.exitCode = status;
-    throw toThrow;
-  };
-
-  Module['inspect'] = () => '[Emscripten Module object]';
-
-} else
 if (ENVIRONMENT_IS_SHELL) {
 
   if ((typeof process == 'object' && typeof require === 'function') || typeof window == 'object' || typeof importScripts == 'function') throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
@@ -221,6 +153,72 @@ if (ENVIRONMENT_IS_SHELL) {
 // Note that this includes Node.js workers when relevant (pthreads is enabled).
 // Node.js workers are detected as a combination of ENVIRONMENT_IS_WORKER and
 // ENVIRONMENT_IS_NODE.
+if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+  if (ENVIRONMENT_IS_WORKER) { // Check worker, not web, since window could be polyfilled
+    scriptDirectory = self.location.href;
+  } else if (typeof document != 'undefined' && document.currentScript) { // web
+    scriptDirectory = document.currentScript.src;
+  }
+  // When MODULARIZE, this JS may be executed later, after document.currentScript
+  // is gone, so we saved it, and we use it here instead of any other info.
+  if (_scriptDir) {
+    scriptDirectory = _scriptDir;
+  }
+  // blob urls look like blob:http://site.com/etc/etc and we cannot infer anything from them.
+  // otherwise, slice off the final part of the url to find the script directory.
+  // if scriptDirectory does not contain a slash, lastIndexOf will return -1,
+  // and scriptDirectory will correctly be replaced with an empty string.
+  // If scriptDirectory contains a query (starting with ?) or a fragment (starting with #),
+  // they are removed because they could contain a slash.
+  if (scriptDirectory.indexOf('blob:') !== 0) {
+    scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf('/')+1);
+  } else {
+    scriptDirectory = '';
+  }
+
+  if (!(typeof window == 'object' || typeof importScripts == 'function')) throw new Error('not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)');
+
+  // Differentiate the Web Worker from the Node Worker case, as reading must
+  // be done differently.
+  {
+// include: web_or_worker_shell_read.js
+read_ = (url) => {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, false);
+    xhr.send(null);
+    return xhr.responseText;
+  }
+
+  if (ENVIRONMENT_IS_WORKER) {
+    readBinary = (url) => {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, false);
+      xhr.responseType = 'arraybuffer';
+      xhr.send(null);
+      return new Uint8Array(/** @type{!ArrayBuffer} */(xhr.response));
+    };
+  }
+
+  readAsync = (url, onload, onerror) => {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = () => {
+      if (xhr.status == 200 || (xhr.status == 0 && xhr.response)) { // file URLs can return 0
+        onload(xhr.response);
+        return;
+      }
+      onerror();
+    };
+    xhr.onerror = onerror;
+    xhr.send(null);
+  }
+
+// end include: web_or_worker_shell_read.js
+  }
+
+  setWindowTitle = (title) => document.title = title;
+} else
 {
   throw new Error('environment detection error');
 }
@@ -272,9 +270,9 @@ var OPFS = 'OPFS is no longer included by default; build with -lopfs.js';
 
 var NODEFS = 'NODEFS is no longer included by default; build with -lnodefs.js';
 
-assert(!ENVIRONMENT_IS_WEB, "web environment detected but not enabled at build time.  Add 'web' to `-sENVIRONMENT` to enable.");
-
 assert(!ENVIRONMENT_IS_WORKER, "worker environment detected but not enabled at build time.  Add 'worker' to `-sENVIRONMENT` to enable.");
+
+assert(!ENVIRONMENT_IS_NODE, "node environment detected but not enabled at build time.  Add 'node' to `-sENVIRONMENT` to enable.");
 
 assert(!ENVIRONMENT_IS_SHELL, "shell environment detected but not enabled at build time.  Add 'shell' to `-sENVIRONMENT` to enable.");
 
@@ -721,13 +719,6 @@ function instantiateAsync(binary, binaryFile, imports, callback) {
   if (!binary &&
       typeof WebAssembly.instantiateStreaming == 'function' &&
       !isDataURI(binaryFile) &&
-      // Avoid instantiateStreaming() on Node.js environment for now, as while
-      // Node.js v18.1.0 implements it, it does not have a full fetch()
-      // implementation yet.
-      //
-      // Reference:
-      //   https://github.com/emscripten-core/emscripten/pull/16917
-      !ENVIRONMENT_IS_NODE &&
       typeof fetch == 'function') {
     return fetch(binaryFile, { credentials: 'same-origin' }).then((response) => {
       // Suppress closure warning here since the upstream definition for
@@ -1000,7 +991,6 @@ function dbg(text) {
       if (!warnOnce.shown) warnOnce.shown = {};
       if (!warnOnce.shown[text]) {
         warnOnce.shown[text] = 1;
-        if (ENVIRONMENT_IS_NODE) text = 'warning: ' + text;
         err(text);
       }
     };
