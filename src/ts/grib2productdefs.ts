@@ -1,4 +1,4 @@
-import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, unpackerFactory } from "./grib2base";
+import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
 
 const g2_forecast_at_time_types = {
     parameter_category: G2UInt1,
@@ -18,7 +18,7 @@ const g2_forecast_at_time_types = {
     fixed_surface_2_value: G2UInt4,
 }
 
-class Grib2ForecastAtTime extends Grib2Struct<typeof g2_forecast_at_time_types> {}
+class Grib2ForecastAtTime extends Grib2Struct<InternalTypeMapper<typeof g2_forecast_at_time_types>> {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
 type ProductDefinition = Grib2ForecastAtTime;

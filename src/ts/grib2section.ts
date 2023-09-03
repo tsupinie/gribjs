@@ -1,8 +1,8 @@
 
-import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8 } from "./grib2base";
-import { g2_section5_template_unpackers } from "./grib2datarepdefs";
-import { section3_template_unpackers } from "./grib2griddefs";
-import { g2_section4_template_unpackers } from "./grib2productdefs";
+import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper } from "./grib2base";
+import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
+import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
+import { ProductDefinition, g2_section4_template_unpackers } from "./grib2productdefs";
 
 /**
  * Grib2 Section 0 (Indicator Section)
@@ -13,10 +13,11 @@ const g2_section0_types = {
     message_length: G2UInt8,
 };
 
-class Grib2Section0 extends Grib2Struct<typeof g2_section0_types> {
+type Grib2Section0Content = InternalTypeMapper<typeof g2_section0_types>;
+class Grib2Section0 extends Grib2Struct<Grib2Section0Content> {
     readonly section_length: 16;
 
-    constructor(contents: Record<keyof typeof g2_section0_types, number>) {
+    constructor(contents: Grib2Section0Content) {
         super(contents);
 
         this.section_length = 16;
@@ -54,8 +55,9 @@ const g2_section1_types = {
     processed_data_type: G2UInt1,
 };
 
-class Grib2Section1 extends Grib2Struct<typeof g2_section1_types> {
-    constructor(contents: Record<keyof typeof g2_section1_types, number>) {
+type Grib2Section1Content = InternalTypeMapper<typeof g2_section1_types>;
+class Grib2Section1 extends Grib2Struct<Grib2Section1Content> {
+    constructor(contents: Grib2Section1Content) {
         if (contents.section_number != 1) {
             throw `Expected section 1, got ${contents.section_number}`
         }
@@ -73,8 +75,9 @@ const g2_section2_types = {
     section_number: G2UInt1,
 }
 
-class Grib2Section2 extends Grib2Struct<typeof g2_section2_types> {
-    constructor(contents: Record<keyof typeof g2_section2_types, number>) {
+type Grib2Section2Content = InternalTypeMapper<typeof g2_section2_types>;
+class Grib2Section2 extends Grib2Struct<Grib2Section2Content> {
+    constructor(contents: Grib2Section2Content) {
         if (contents.section_number != 2) {
             throw `Expected section 2, got ${contents.section_number}`
         }
@@ -97,8 +100,9 @@ const g2_section3_types = {
     grid_definition_template: section3_template_unpackers,
 };
 
-class Grib2Section3 extends Grib2Struct<typeof g2_section3_types> {
-    constructor(contents: Record<keyof typeof g2_section3_types, number>) {
+type Grib2Section3Content = InternalTypeMapper<typeof g2_section3_types, 'grid_definition_template', GridDefinition>;
+class Grib2Section3 extends Grib2Struct<Grib2Section3Content> {
+    constructor(contents: Grib2Section3Content) {
         if (contents.section_number != 3) {
             throw `Expected section 3, got ${contents.section_number}`
         }
@@ -118,8 +122,9 @@ const g2_section4_types = {
     product_definition_template: g2_section4_template_unpackers,
 }
 
-class Grib2Section4 extends Grib2Struct<typeof g2_section4_types> {
-    constructor(contents: Record<keyof typeof g2_section4_types, number>) {
+type Grib2Section4Content = InternalTypeMapper<typeof g2_section4_types, 'product_definition_template', ProductDefinition>;
+class Grib2Section4 extends Grib2Struct<Grib2Section4Content> {
+    constructor(contents: Grib2Section4Content) {
         if (contents.section_number != 4) {
             throw `Expected section 4, got ${contents.section_number}`
         }
@@ -140,8 +145,9 @@ const g2_section5_types = {
     data_representation_template: g2_section5_template_unpackers,
 }
 
-class Grib2Section5 extends Grib2Struct<typeof g2_section5_types> {
-    constructor(contents: Record<keyof typeof g2_section5_types, number>) {
+type Grib2Section5Content = InternalTypeMapper<typeof g2_section5_types, 'data_representation_template', DataRepresentationDefinition>;
+class Grib2Section5 extends Grib2Struct<Grib2Section5Content> {
+    constructor(contents: Grib2Section5Content) {
         if (contents.section_number != 5) {
             throw `Expected section 5, got ${contents.section_number}`
         }
@@ -152,17 +158,18 @@ class Grib2Section5 extends Grib2Struct<typeof g2_section5_types> {
 
 const g2_section5_unpacker = unpackerFactory(g2_section5_types, Grib2Section5);
 
+/**
+ * Grib2 Section 6 (Bitmap Section)
+ */
 const g2_section6_types = {
     section_length: G2UInt4,
     section_number: G2UInt1,
     bitmap_indicator: G2UInt1,
 }
 
-/**
- * Grib2 Section 6 (Bitmap Section)
- */
-class Grib2Section6 extends Grib2Struct<typeof g2_section6_types> {
-    constructor(contents: Record<keyof typeof g2_section6_types, number>) {
+type Grib2Section6Content = InternalTypeMapper<typeof g2_section6_types>;
+class Grib2Section6 extends Grib2Struct<Grib2Section6Content> {
+    constructor(contents: Grib2Section6Content) {
         if (contents.section_number != 6) {
             throw `Expected section 6, got ${contents.section_number}`
         }
@@ -181,8 +188,9 @@ const g2_section7_types = {
     section_number: G2UInt1,
 }
 
-class Grib2Section7 extends Grib2Struct<typeof g2_section7_types> {
-    constructor(contents: Record<keyof typeof g2_section7_types, number>) {
+type Grib2Section7Content = InternalTypeMapper<typeof g2_section7_types>;
+class Grib2Section7 extends Grib2Struct<Grib2Section7Content> {
+    constructor(contents: Grib2Section7Content) {
         if (contents.section_number != 7) {
             throw `Expected section 7, got ${contents.section_number}`
         }
