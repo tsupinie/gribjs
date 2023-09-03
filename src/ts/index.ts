@@ -48,15 +48,17 @@ class Grib2Message {
             throw `Missing end marker`;
         }
 
-        console.log("Indicator section:", sec0);
-        console.log("Identification section:", sec1);
-        console.log("Local use section:", sec2);
-        console.log("Grid definition section:", sec3);
-        console.log("Product definition section:", sec4);
-        console.log("Data representation section:", sec5);
-        console.log("Bitmap section:", sec6);
-        console.log("Data section:", sec7);
-        console.log("Data:", data.reduce((a, b) => Math.min(a, b)), data.reduce((a, b) => Math.max(a, b)));
+        console.log("Decoded Grib2 File");
+        console.log("Headers:");
+        console.log(sec0);
+        console.log(sec1);
+        console.log(sec2);
+        console.log(sec3);
+        console.log(sec4);
+        console.log(sec5);
+        console.log(sec6);
+        console.log(sec7);
+        console.log("Data Min/max:", data.reduce((a, b) => Math.min(a, b)), data.reduce((a, b) => Math.max(a, b)));
     }
 }
 
