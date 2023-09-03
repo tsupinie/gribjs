@@ -16,7 +16,7 @@ const g2_section0_types = {
 class Grib2Section0 extends Grib2Struct<typeof g2_section0_types> {
     readonly section_length: 16;
 
-    constructor(contents: Map<keyof typeof g2_section0_types, number>) {
+    constructor(contents: Record<keyof typeof g2_section0_types, number>) {
         super(contents);
 
         this.section_length = 16;
@@ -55,9 +55,9 @@ const g2_section1_types = {
 };
 
 class Grib2Section1 extends Grib2Struct<typeof g2_section1_types> {
-    constructor(contents: Map<keyof typeof g2_section1_types, number>) {
-        if (contents.get('section_number') != 1) {
-            throw `Expected section 1, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section1_types, number>) {
+        if (contents.section_number != 1) {
+            throw `Expected section 1, got ${contents.section_number}`
         }
 
         super(contents);
@@ -74,9 +74,9 @@ const g2_section2_types = {
 }
 
 class Grib2Section2 extends Grib2Struct<typeof g2_section2_types> {
-    constructor(contents: Map<keyof typeof g2_section2_types, number>) {
-        if (contents.get('section_number') != 2) {
-            throw `Expected section 2, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section2_types, number>) {
+        if (contents.section_number != 2) {
+            throw `Expected section 2, got ${contents.section_number}`
         }
 
         super(contents);
@@ -98,9 +98,9 @@ const g2_section3_types = {
 };
 
 class Grib2Section3 extends Grib2Struct<typeof g2_section3_types> {
-    constructor(contents: Map<keyof typeof g2_section3_types, number>) {
-        if (contents.get('section_number') != 3) {
-            throw `Expected section 3, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section3_types, number>) {
+        if (contents.section_number != 3) {
+            throw `Expected section 3, got ${contents.section_number}`
         }
 
         super(contents);
@@ -119,9 +119,9 @@ const g2_section4_types = {
 }
 
 class Grib2Section4 extends Grib2Struct<typeof g2_section4_types> {
-    constructor(contents: Map<keyof typeof g2_section4_types, number>) {
-        if (contents.get('section_number') != 4) {
-            throw `Expected section 4, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section4_types, number>) {
+        if (contents.section_number != 4) {
+            throw `Expected section 4, got ${contents.section_number}`
         }
 
         super(contents);
@@ -141,9 +141,9 @@ const g2_section5_types = {
 }
 
 class Grib2Section5 extends Grib2Struct<typeof g2_section5_types> {
-    constructor(contents: Map<keyof typeof g2_section5_types, number>) {
-        if (contents.get('section_number') != 5) {
-            throw `Expected section 5, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section5_types, number>) {
+        if (contents.section_number != 5) {
+            throw `Expected section 5, got ${contents.section_number}`
         }
 
         super(contents);
@@ -162,9 +162,9 @@ const g2_section6_types = {
  * Grib2 Section 6 (Bitmap Section)
  */
 class Grib2Section6 extends Grib2Struct<typeof g2_section6_types> {
-    constructor(contents: Map<keyof typeof g2_section6_types, number>) {
-        if (contents.get('section_number') != 6) {
-            throw `Expected section 6, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section6_types, number>) {
+        if (contents.section_number != 6) {
+            throw `Expected section 6, got ${contents.section_number}`
         }
 
         super(contents);
@@ -182,9 +182,9 @@ const g2_section7_types = {
 }
 
 class Grib2Section7 extends Grib2Struct<typeof g2_section7_types> {
-    constructor(contents: Map<keyof typeof g2_section7_types, number>) {
-        if (contents.get('section_number') != 7) {
-            throw `Expected section 7, got ${contents.get('section_number')}`
+    constructor(contents: Record<keyof typeof g2_section7_types, number>) {
+        if (contents.section_number != 7) {
+            throw `Expected section 7, got ${contents.section_number}`
         }
 
         super(contents);

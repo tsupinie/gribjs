@@ -11,7 +11,7 @@ const G2UInt8 = 'ui8' as G2UInt8Type;
 type Grib2InternalType = G2UInt1Type | G2UInt2Type | G2UInt4Type | G2UInt8Type;
 type Grib2TemplateEnumeration<T> = Record<number, Unpackable<T>>;
 type Grib2ContentSpecTemplate<T> = Record<string, Grib2InternalType | Grib2TemplateEnumeration<T>>;
-type Grib2Content<T, U> = Map<keyof T, number | U>
+type Grib2Content<T, U> = Record<keyof T, number | U>
 
 function isInternalType<T>(obj: Grib2InternalType | Grib2TemplateEnumeration<T>) : obj is Grib2InternalType {
     return obj === 'ui1' || obj === 'ui2' || obj === 'ui4' || obj === 'ui8';
@@ -55,22 +55,22 @@ function unpackStruct<T, U>(buf: DataView, struct: Grib2ContentSpecTemplate<U>, 
         }
     }
 
-    let contents = new Map<keyof T, number | U>();
+    let contents: Record<string, number | U> = {};
 
     for (let name in struct) {
         const dtype = struct[name];
         if (isInternalType(dtype)) {
-            contents.set(name as keyof T, data_types[dtype]());
+            contents[name] = data_types[dtype]();
         }
         else {
             const template_number = data_types['ui2']();
             const template = dtype[template_number];
             const template_data = template.unpack(buf, offset)
-            contents.set(name as keyof T, template_data);
+            contents[name] = template_data;
         }
     };
 
-    return contents;
+    return contents as Record<keyof T, number | U>;
 }
 
 function unpackUTF8String(buf: DataView, offset: number, length: number) {
@@ -78,9 +78,9 @@ function unpackUTF8String(buf: DataView, offset: number, length: number) {
 }
 
 class Grib2Struct<T> {
-    contents: Map<keyof T, number>;
+    contents: Record<keyof T, number>;
 
-    constructor(contents: Map<keyof T, number>) {
+    constructor(contents: Record<keyof T, number>) {
         this.contents = contents;
     }
 }
@@ -89,7 +89,7 @@ interface Unpackable<T> {
     unpack(b: DataView, o: number): T;
 }
 
-function unpackerFactory<T, U extends new(c: Map<keyof T, number | V>) => InstanceType<U>, V>
+function unpackerFactory<T, U extends new(c: Record<keyof T, number | V>) => InstanceType<U>, V>
         (internal_types: Record<keyof T, Grib2InternalType | Grib2TemplateEnumeration<V>>, return_type: U, unpacker?: (b: DataView, o: number) => InstanceType<U>) {
 
     const default_unpacker = (buf: DataView, offset: number) => {

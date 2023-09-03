@@ -18,29 +18,29 @@ class Grib2Message {
         offset += sec0.section_length;
 
         const sec1 = g2_section1_unpacker.unpack(data, offset);
-        offset += sec1.contents.get('section_length');
+        offset += sec1.contents.section_length;
 
         let sec2 = null;
         try {
             sec2 = g2_section2_unpacker.unpack(data, offset);
-            offset += sec2.contents.get('section_length');
+            offset += sec2.contents.section_length;
         }
         catch {}
 
         const sec3 = g2_section3_unpacker.unpack(data, offset);
-        offset += sec3.contents.get('section_length');
+        offset += sec3.contents.section_length;
 
         const sec4 = g2_section4_unpacker.unpack(data, offset);
-        offset += sec4.contents.get('section_length');
+        offset += sec4.contents.section_length;
 
         const sec5 = g2_section5_unpacker.unpack(data, offset);
-        offset += sec5.contents.get('section_length');
+        offset += sec5.contents.section_length;
 
         const sec6 = g2_section6_unpacker.unpack(data, offset);
-        offset += sec6.contents.get('section_length');
+        offset += sec6.contents.section_length;
 
         const sec7 = g2_section7_unpacker.unpack(data, offset);
-        offset += sec7.contents.get('section_length');
+        offset += sec7.contents.section_length;
 
         const end_marker = unpackUTF8String(data, offset, 4);
         if (end_marker != '7777') {
