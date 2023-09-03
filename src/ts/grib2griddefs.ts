@@ -1,44 +1,44 @@
 
-import { Grib2InternalType, Grib2Struct, Grib2TemplateEnumeration, unpackerFactory } from "./grib2base";
+import { G2UInt1, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, unpackerFactory } from "./grib2base";
 
 const g2_plate_carree_types = {
-    earth_shape: 'ui1' as Grib2InternalType,
-    spherical_earth_radius_scale_factor: 'ui1' as Grib2InternalType,
-    spherical_earth_radius_value: 'ui4' as Grib2InternalType,
-    oblate_earth_semimajor_axis_scale_factor: 'ui1' as Grib2InternalType,
-    oblate_earth_semimajor_axis_value: 'ui4' as Grib2InternalType,
-    oblate_earth_semiminor_axis_scale_factor: 'ui1' as Grib2InternalType,
-    oblate_earth_semiminor_axis_value: 'ui4' as Grib2InternalType,
-    ngrid_i: 'ui4' as Grib2InternalType,
-    ngrid_j: 'ui4' as Grib2InternalType,
-    basic_angle: 'ui4' as Grib2InternalType,
-    subdivisions_to_basic_angle: 'ui4' as Grib2InternalType,
-    lat_first: 'ui4' as Grib2InternalType,
-    lon_first: 'ui4' as Grib2InternalType,
-    resolution_component_flags: 'ui1' as Grib2InternalType,
-    lat_last: 'ui4' as Grib2InternalType,
-    lon_last: 'ui4' as Grib2InternalType,
-    i_direction_increment: 'ui4' as Grib2InternalType,
-    j_direction_increment: 'ui4' as Grib2InternalType,
-    scanning_mode_flags: 'ui4' as Grib2InternalType,
+    earth_shape: G2UInt1,
+    spherical_earth_radius_scale_factor: G2UInt1,
+    spherical_earth_radius_value: G2UInt4,
+    oblate_earth_semimajor_axis_scale_factor: G2UInt1,
+    oblate_earth_semimajor_axis_value: G2UInt4,
+    oblate_earth_semiminor_axis_scale_factor: G2UInt1,
+    oblate_earth_semiminor_axis_value: G2UInt4,
+    ngrid_i: G2UInt4,
+    ngrid_j: G2UInt4,
+    basic_angle: G2UInt4,
+    subdivisions_to_basic_angle: G2UInt4,
+    lat_first: G2UInt4,
+    lon_first: G2UInt4,
+    resolution_component_flags: G2UInt1,
+    lat_last: G2UInt4,
+    lon_last: G2UInt4,
+    i_direction_increment: G2UInt4,
+    j_direction_increment: G2UInt4,
+    scanning_mode_flags: G2UInt4,
 };
 
 class Grib2PlateCarreeGridDefinition extends Grib2Struct<typeof g2_plate_carree_types> {}
 const g2_plate_carree_grid_unpacker = unpackerFactory(g2_plate_carree_types, Grib2PlateCarreeGridDefinition);
 
 const g2_lambert_conformal_types = {
-    earth_shape: 'ui1' as Grib2InternalType,
-    spherical_earth_radius_scale_factor: 'ui1' as Grib2InternalType,
-    spherical_earth_radius_value: 'ui4' as Grib2InternalType,
-    oblate_earth_semimajor_axis_scale_factor: 'ui1' as Grib2InternalType,
-    oblate_earth_semimajor_axis_value: 'ui4' as Grib2InternalType,
-    oblate_earth_semiminor_axis_scale_factor: 'ui1' as Grib2InternalType,
-    oblate_earth_semiminor_axis_value: 'ui4' as Grib2InternalType,
-    ngrid_i: 'ui4' as Grib2InternalType,
-    lat_first: 'ui4' as Grib2InternalType,
-    lon_first: 'ui4' as Grib2InternalType,
-    resolution_component_flags: 'ui1' as Grib2InternalType,
-    center_latitude: 'ui4' as Grib2InternalType,
+    earth_shape: G2UInt1,
+    spherical_earth_radius_scale_factor: G2UInt1,
+    spherical_earth_radius_value: G2UInt4,
+    oblate_earth_semimajor_axis_scale_factor: G2UInt1,
+    oblate_earth_semimajor_axis_value: G2UInt4,
+    oblate_earth_semiminor_axis_scale_factor: G2UInt1,
+    oblate_earth_semiminor_axis_value: G2UInt4,
+    ngrid_i: G2UInt4,
+    lat_first: G2UInt4,
+    lon_first: G2UInt4,
+    resolution_component_flags: G2UInt1,
+    center_latitude: G2UInt4,
 }
 
 class Grib2LambertConformalGridDefinition extends Grib2Struct<typeof g2_lambert_conformal_types> {}

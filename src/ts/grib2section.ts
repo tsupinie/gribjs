@@ -1,5 +1,5 @@
 
-import { Grib2InternalType, Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory } from "./grib2base";
+import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8 } from "./grib2base";
 import { g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { section3_template_unpackers } from "./grib2griddefs";
 import { g2_section4_template_unpackers } from "./grib2productdefs";
@@ -8,9 +8,9 @@ import { g2_section4_template_unpackers } from "./grib2productdefs";
  * Grib2 Section 0 (Indicator Section)
  */
 const g2_section0_types = {
-    grib_discipline: 'ui1' as Grib2InternalType,
-    grib_edition: 'ui1' as Grib2InternalType,
-    message_length: 'ui8' as Grib2InternalType,
+    grib_discipline: G2UInt1,
+    grib_edition: G2UInt1,
+    message_length: G2UInt8,
 };
 
 class Grib2Section0 extends Grib2Struct<typeof g2_section0_types> {
@@ -37,21 +37,21 @@ const g2_section0_unpacker = unpackerFactory(g2_section0_types, Grib2Section0, (
  * Grib2 Section 1 (Identification Section)
  */
 const g2_section1_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
-    originating_center_id: 'ui2' as Grib2InternalType,
-    originating_subcenter_id: 'ui2' as Grib2InternalType,
-    grib_master_table_version: 'ui1' as Grib2InternalType,
-    grib_local_table_version: 'ui1' as Grib2InternalType,
-    reference_time_singificance: 'ui1' as Grib2InternalType,
-    reference_year: 'ui2' as Grib2InternalType,
-    reference_month: 'ui1' as Grib2InternalType,
-    reference_day: 'ui1' as Grib2InternalType,
-    reference_hour: 'ui1' as Grib2InternalType,
-    reference_minute: 'ui1' as Grib2InternalType,
-    reference_second: 'ui1' as Grib2InternalType,
-    production_status: 'ui1' as Grib2InternalType,
-    processed_data_type: 'ui1' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
+    originating_center_id: G2UInt2,
+    originating_subcenter_id: G2UInt2,
+    grib_master_table_version: G2UInt1,
+    grib_local_table_version: G2UInt1,
+    reference_time_singificance: G2UInt1,
+    reference_year: G2UInt2,
+    reference_month: G2UInt1,
+    reference_day: G2UInt1,
+    reference_hour: G2UInt1,
+    reference_minute: G2UInt1,
+    reference_second: G2UInt1,
+    production_status: G2UInt1,
+    processed_data_type: G2UInt1,
 };
 
 class Grib2Section1 extends Grib2Struct<typeof g2_section1_types> {
@@ -69,8 +69,8 @@ const g2_section1_unpacker = unpackerFactory(g2_section1_types, Grib2Section1);
  * Grib2 Section 2 (Local Use Section)
  */
 const g2_section2_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
 }
 
 class Grib2Section2 extends Grib2Struct<typeof g2_section2_types> {
@@ -88,12 +88,12 @@ const g2_section2_unpacker = unpackerFactory(g2_section2_types, Grib2Section2);
  * Grib2 Section 3 (Grid Definition Section)
  */
 const g2_section3_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
-    grid_definition_source: 'ui1' as Grib2InternalType,
-    grid_size: 'ui4' as Grib2InternalType,
-    optional_point_list_length: 'ui1' as Grib2InternalType,
-    optional_point_list_interpretation: 'ui1' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
+    grid_definition_source: G2UInt1,
+    grid_size: G2UInt4,
+    optional_point_list_length: G2UInt1,
+    optional_point_list_interpretation: G2UInt1,
     grid_definition_template: section3_template_unpackers,
 };
 
@@ -112,9 +112,9 @@ const g2_section3_unpacker = unpackerFactory(g2_section3_types, Grib2Section3);
  * Grib2 Section 4 (Product Definition Section)
  */
 const g2_section4_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
-    optional_number_of_coordinates: 'ui2' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
+    optional_number_of_coordinates: G2UInt2,
     product_definition_template: g2_section4_template_unpackers,
 }
 
@@ -134,9 +134,9 @@ const g2_section4_unpacker = unpackerFactory(g2_section4_types, Grib2Section4);
  * Grib2 Section 5 (Data Representation Section)
  */
 const g2_section5_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
-    number_of_data_points: 'ui4' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
+    number_of_data_points: G2UInt4,
     data_representation_template: g2_section5_template_unpackers,
 }
 
@@ -153,9 +153,9 @@ class Grib2Section5 extends Grib2Struct<typeof g2_section5_types> {
 const g2_section5_unpacker = unpackerFactory(g2_section5_types, Grib2Section5);
 
 const g2_section6_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
-    bitmap_indicator: 'ui1' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
+    bitmap_indicator: G2UInt1,
 }
 
 /**
@@ -177,8 +177,8 @@ const g2_section6_unpacker = unpackerFactory(g2_section6_types, Grib2Section6);
  * Grib2 Section 7 (Data Section)
  */
 const g2_section7_types = {
-    section_length: 'ui4' as Grib2InternalType,
-    section_number: 'ui1' as Grib2InternalType,
+    section_length: G2UInt4,
+    section_number: G2UInt1,
 }
 
 class Grib2Section7 extends Grib2Struct<typeof g2_section7_types> {

@@ -1,5 +1,14 @@
 
-type Grib2InternalType = 'ui1' | 'ui2' | 'ui4' | 'ui8';
+type G2UInt1Type = 'ui1';
+type G2UInt2Type = 'ui2';
+type G2UInt4Type = 'ui4';
+type G2UInt8Type = 'ui8';
+const G2UInt1 = 'ui1' as G2UInt1Type;
+const G2UInt2 = 'ui2' as G2UInt2Type;
+const G2UInt4 = 'ui4' as G2UInt4Type;
+const G2UInt8 = 'ui8' as G2UInt8Type;
+
+type Grib2InternalType = G2UInt1Type | G2UInt2Type | G2UInt4Type | G2UInt8Type;
 type Grib2TemplateEnumeration<T> = Record<number, Unpackable<T>>;
 type Grib2ContentSpecTemplate<T> = Record<string, Grib2InternalType | Grib2TemplateEnumeration<T>>;
 type Grib2Content<T, U> = Map<keyof T, number | U>
@@ -99,5 +108,5 @@ function unpackerFactory<T, U extends new(c: Map<keyof T, number | V>) => Instan
     return new Factory();
 }
 
-export {Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory};
-export type {Grib2InternalType, Grib2TemplateEnumeration, Grib2Content, Grib2ContentSpecTemplate, Unpackable}
+export {Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8};
+export type {Grib2InternalType, Grib2TemplateEnumeration, Grib2Content, Grib2ContentSpecTemplate, Unpackable};

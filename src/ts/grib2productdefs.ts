@@ -1,21 +1,21 @@
-import { Grib2InternalType, Grib2Struct, Grib2TemplateEnumeration, unpackerFactory } from "./grib2base";
+import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, unpackerFactory } from "./grib2base";
 
 const g2_forecast_at_time_types = {
-    parameter_category: 'ui1' as Grib2InternalType,
-    parameter_number: 'ui1' as Grib2InternalType,
-    generating_process_type: 'ui1' as Grib2InternalType,
-    generating_process_identifier: 'ui1' as Grib2InternalType,
-    generating_process: 'ui1' as Grib2InternalType,
-    obs_data_cutoff_hours: 'ui2' as Grib2InternalType,
-    obs_data_cutoff_minutes: 'ui1' as Grib2InternalType,
-    time_range_unit: 'ui1' as Grib2InternalType,
-    forecast_time: 'ui4' as Grib2InternalType,
-    fixed_surface_1_type: 'ui1' as Grib2InternalType,
-    fixed_surface_1_scale_factor: 'ui1' as Grib2InternalType,
-    fixed_surface_1_value: 'ui4' as Grib2InternalType,
-    fixed_surface_2_type: 'ui1' as Grib2InternalType,
-    fixed_surface_2_scale_factor: 'ui1' as Grib2InternalType,
-    fixed_surface_2_value: 'ui4' as Grib2InternalType,
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
 }
 
 class Grib2ForecastAtTime extends Grib2Struct<typeof g2_forecast_at_time_types> {}
