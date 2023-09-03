@@ -197,6 +197,10 @@ class Grib2Section7 extends Grib2Struct<Grib2Section7Content> {
 
         super(contents);
     }
+
+    unpackData(buffer: DataView, offset: number, sec5: Grib2Section5) {
+        return sec5.contents.data_representation_template.unpackData(buffer, offset, this.contents.section_length - 5, sec5.contents.number_of_data_points);
+    }
 }
 
 const g2_section7_unpacker = unpackerFactory(g2_section7_types, Grib2Section7);
