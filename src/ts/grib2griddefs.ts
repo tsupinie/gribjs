@@ -1,6 +1,8 @@
 
 import { G2UInt1, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
 
+interface GridDefinition {}
+
 const g2_plate_carree_types = {
     earth_shape: G2UInt1,
     spherical_earth_radius_scale_factor: G2UInt1,
@@ -23,7 +25,7 @@ const g2_plate_carree_types = {
     scanning_mode_flags: G2UInt4,
 };
 
-class Grib2PlateCarreeGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_types>> {}
+class Grib2PlateCarreeGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_types>> implements GridDefinition {}
 const g2_plate_carree_grid_unpacker = unpackerFactory(g2_plate_carree_types, Grib2PlateCarreeGridDefinition);
 
 const g2_lambert_conformal_types = {
@@ -51,10 +53,8 @@ const g2_lambert_conformal_types = {
     south_pole_longitude: G2UInt4
 }
 
-class Grib2LambertConformalGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_lambert_conformal_types>> {}
+class Grib2LambertConformalGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_lambert_conformal_types>> implements GridDefinition {}
 const g2_lambert_conformal_grid_unpacker = unpackerFactory(g2_lambert_conformal_types, Grib2LambertConformalGridDefinition);
-
-type GridDefinition = Grib2PlateCarreeGridDefinition | Grib2LambertConformalGridDefinition;
 
 const section3_template_unpackers: Grib2TemplateEnumeration<GridDefinition> = {
     0: g2_plate_carree_grid_unpacker,
