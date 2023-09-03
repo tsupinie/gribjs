@@ -1,6 +1,8 @@
 
 import { Grib2InternalType, Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory } from "./grib2base";
+import { g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { section3_template_unpackers } from "./grib2griddefs";
+import { g2_section4_template_unpackers } from "./grib2productdefs";
 
 /**
  * Grib2 Section 0 (Indicator Section)
@@ -63,14 +65,14 @@ class Grib2Section1 extends Grib2Struct<typeof g2_section1_types> {
 }
 const g2_section1_unpacker = unpackerFactory(g2_section1_types, Grib2Section1);
 
+/**
+ * Grib2 Section 2 (Local Use Section)
+ */
 const g2_section2_types = {
     section_length: 'ui4' as Grib2InternalType,
     section_number: 'ui1' as Grib2InternalType,
 }
 
-/**
- * Grib2 Section 2 (Local Use section)
- */
 class Grib2Section2 extends Grib2Struct<typeof g2_section2_types> {
     constructor(contents: Map<keyof typeof g2_section2_types, number>) {
         if (contents.get('section_number') != 2) {
@@ -82,6 +84,9 @@ class Grib2Section2 extends Grib2Struct<typeof g2_section2_types> {
 }
 const g2_section2_unpacker = unpackerFactory(g2_section2_types, Grib2Section2);
 
+/**
+ * Grib2 Section 3 (Grid Definition Section)
+ */
 const g2_section3_types = {
     section_length: 'ui4' as Grib2InternalType,
     section_number: 'ui1' as Grib2InternalType,
@@ -103,70 +108,89 @@ class Grib2Section3 extends Grib2Struct<typeof g2_section3_types> {
 }
 const g2_section3_unpacker = unpackerFactory(g2_section3_types, Grib2Section3);
 
-/*
-
-const PRODUCT_DEFINITION_SECTION = [
-    ['section_length', 'ui4'],
-    ['section_number', 'ui1'],
-    ['optional_number_of_coordinates', 'ui2'],
-    ['product_definition_template_number', 'ui2'],
-]
-
-const PRODUCT_DEFINITION_TEMPLATES = {
-    0: [
-        ['parameter_category', 'ui1'],
-        ['parameter_number', 'ui1'],
-        ['generating_process_type', 'ui1'],
-        ['generating_process_identifier', 'ui1'],
-        ['generating_process', 'ui1'],
-        ['obs_data_cutoff_hours', 'ui2'],
-        ['obs_data_cutoff_minutes', 'ui1'],
-        ['time_range_unit', 'ui1'],
-        ['forecast_time', 'ui4'],
-        ['fixed_surface_1_type', 'ui1'],
-        ['fixed_surface_1_scale_factor', 'ui1'],
-        ['fixed_surface_1_value', 'ui4'],
-        ['fixed_surface_2_type', 'ui1'],
-        ['fixed_surface_2_scale_factor', 'ui1'],
-        ['fixed_surface_2_value', 'ui4'],
-    ]
+/**
+ * Grib2 Section 4 (Product Definition Section)
+ */
+const g2_section4_types = {
+    section_length: 'ui4' as Grib2InternalType,
+    section_number: 'ui1' as Grib2InternalType,
+    optional_number_of_coordinates: 'ui2' as Grib2InternalType,
+    product_definition_template: g2_section4_template_unpackers,
 }
 
-const DATA_REPRESENTATION_SECTION = [
-    ['section_length', 'ui4'],
-    ['section_number', 'ui1'],
-    ['number_of_data_points', 'ui4'],
-    ['data_representation_template_number', 'ui2']
-]
+class Grib2Section4 extends Grib2Struct<typeof g2_section4_types> {
+    constructor(contents: Map<keyof typeof g2_section4_types, number>) {
+        if (contents.get('section_number') != 4) {
+            throw `Expected section 4, got ${contents.get('section_number')}`
+        }
 
-const DATA_REPRESENTATION_TEMPLATES = {
-    0: [
-        ['reference_value', 'ui4'],
-        ['binary_scale_factor', 'ui2'],
-        ['decimal_scale_factor', 'ui2'],
-        ['number_of_bits', 'ui1'],
-        ['original_data_type', 'ui1'],
-    ],
-    41: [
-        ['reference_value', 'ui4'],
-        ['binary_scale_factor', 'ui2'],
-        ['decimal_scale_factor', 'ui2'],
-        ['bit_depth', 'ui1'],
-        ['original_data_type', 'ui1'],
-    ]
+        super(contents);
+    }
 }
 
-const BITMAP_SECTION = [
-    ['section_length', 'ui4'],
-    ['section_number', 'ui1'],
-    ['bitmap_indicator', 'ui1'],
-];
+const g2_section4_unpacker = unpackerFactory(g2_section4_types, Grib2Section4);
 
-const DATA_SECTION = [
-    ['section_length', 'ui4'],
-    ['section_number', 'ui1'],
-];
+/**
+ * Grib2 Section 5 (Data Representation Section)
+ */
+const g2_section5_types = {
+    section_length: 'ui4' as Grib2InternalType,
+    section_number: 'ui1' as Grib2InternalType,
+    number_of_data_points: 'ui4' as Grib2InternalType,
+    data_representation_template: g2_section5_template_unpackers,
+}
 
-*/
+class Grib2Section5 extends Grib2Struct<typeof g2_section5_types> {
+    constructor(contents: Map<keyof typeof g2_section5_types, number>) {
+        if (contents.get('section_number') != 5) {
+            throw `Expected section 5, got ${contents.get('section_number')}`
+        }
 
-export {g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker};
+        super(contents);
+    }
+}
+
+const g2_section5_unpacker = unpackerFactory(g2_section5_types, Grib2Section5);
+
+const g2_section6_types = {
+    section_length: 'ui4' as Grib2InternalType,
+    section_number: 'ui1' as Grib2InternalType,
+    bitmap_indicator: 'ui1' as Grib2InternalType,
+}
+
+/**
+ * Grib2 Section 6 (Bitmap Section)
+ */
+class Grib2Section6 extends Grib2Struct<typeof g2_section6_types> {
+    constructor(contents: Map<keyof typeof g2_section6_types, number>) {
+        if (contents.get('section_number') != 6) {
+            throw `Expected section 6, got ${contents.get('section_number')}`
+        }
+
+        super(contents);
+    }
+}
+
+const g2_section6_unpacker = unpackerFactory(g2_section6_types, Grib2Section6);
+
+/**
+ * Grib2 Section 7 (Data Section)
+ */
+const g2_section7_types = {
+    section_length: 'ui4' as Grib2InternalType,
+    section_number: 'ui1' as Grib2InternalType,
+}
+
+class Grib2Section7 extends Grib2Struct<typeof g2_section7_types> {
+    constructor(contents: Map<keyof typeof g2_section7_types, number>) {
+        if (contents.get('section_number') != 7) {
+            throw `Expected section 7, got ${contents.get('section_number')}`
+        }
+
+        super(contents);
+    }
+}
+
+const g2_section7_unpacker = unpackerFactory(g2_section7_types, Grib2Section7);
+
+export {g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker, g2_section5_unpacker, g2_section6_unpacker, g2_section7_unpacker};
