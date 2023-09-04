@@ -1,18 +1,36 @@
 
 import { unpackUTF8String } from './grib2base';
-import {g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker,
+import {Grib2BitmapSection, Grib2DataRepresentationSection, Grib2DataSection, Grib2GridDefinitionSection, Grib2IdentificationSection, Grib2IndicatorSection, 
+        Grib2LocalUseSection, Grib2ProductDefinitionSection, g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker,
         g2_section5_unpacker, g2_section6_unpacker, g2_section7_unpacker} from './grib2section';
 
 class Grib2File {
 
 }
 
-class Grib2Message {
-    constructor() {
+class Grib2MessageHeaders {
+    readonly sec0: Grib2IndicatorSection;
+    readonly sec1: Grib2IdentificationSection;
+    readonly sec2: Grib2LocalUseSection | null;
+    readonly sec3: Grib2GridDefinitionSection;
+    readonly sec4: Grib2ProductDefinitionSection;
+    readonly sec5: Grib2DataRepresentationSection;
+    readonly sec6: Grib2BitmapSection;
+    readonly sec7: Grib2DataSection;
 
+    constructor(sec0: Grib2IndicatorSection, sec1: Grib2IdentificationSection, sec2: Grib2LocalUseSection | null, sec3: Grib2GridDefinitionSection,
+                sec4: Grib2ProductDefinitionSection, sec5: Grib2DataRepresentationSection, sec6: Grib2BitmapSection, sec7: Grib2DataSection) {
+        this.sec0 = sec0;
+        this.sec1 = sec1;
+        this.sec2 = sec2;
+        this.sec3 = sec3;
+        this.sec4 = sec4;
+        this.sec5 = sec5;
+        this.sec6 = sec6;
+        this.sec7 = sec7;
     }
 
-    static async unpack(buffer: DataView, offset: number) {
+    static unpack(buffer: DataView, offset: number) {
         const sec0 = g2_section0_unpacker.unpack(buffer, offset);
         offset += sec0.section_length;
 
@@ -39,8 +57,6 @@ class Grib2Message {
         offset += sec6.contents.section_length;
 
         const sec7 = g2_section7_unpacker.unpack(buffer, offset);
-        const data = await sec7.unpackData(buffer, offset + 5, sec5);
-
         offset += sec7.contents.section_length;
 
         const end_marker = unpackUTF8String(buffer, offset, 4);
@@ -48,24 +64,30 @@ class Grib2Message {
             throw `Missing end marker`;
         }
 
-        console.log("Decoded Grib2 File");
-        console.log("Headers:");
-        console.log(sec0);
-        console.log(sec1);
-        console.log(sec2);
-        console.log(sec3);
-        console.log(sec4);
-        console.log(sec4.getProduct(sec0.contents.grib_discipline));
-        console.log(sec4.getSurface());
-        console.log(sec5);
-        console.log(sec6);
-        console.log(sec7);
-        console.log("Data Min/max:", data.reduce((a, b) => Math.min(a, b)), data.reduce((a, b) => Math.max(a, b)));
+        return new Grib2MessageHeaders(sec0, sec1, sec2, sec3, sec4, sec5, sec6, sec7);
+    }
+}
+
+class Grib2Message {
+    readonly headers: Grib2MessageHeaders;
+    readonly data: Float32Array;
+
+    constructor(headers: Grib2MessageHeaders, data: Float32Array) {
+        this.headers = headers;
+        this.data = data;
+    }
+
+    static async unpack(buffer: DataView, offset: number) {
+        const headers = Grib2MessageHeaders.unpack(buffer, offset);
+        const data = await headers.sec7.unpackData(buffer, headers.sec7.offset + 5, headers.sec5);
+
+        return new Grib2Message(headers, data);
     }
 }
 
 (async () => {
     const resp = await fetch('http://localhost:9090/MRMS_MergedReflectivityQCComposite_00.50_20230829-233640.grib2');
     const buffer = new DataView(await resp.arrayBuffer());
-    await Grib2Message.unpack(buffer, 0);
+    const msg = await Grib2Message.unpack(buffer, 0);
+    console.log(msg.data);
 })();
