@@ -119,4 +119,4 @@ class Grib2Message {
     }
 }
 
-export {Grib2Message, Grib2MessageHeaders, Grib2File};
+export {Grib2Message, Grib2MessageHeaders, Grib2File, addGrib2ParameterListing};

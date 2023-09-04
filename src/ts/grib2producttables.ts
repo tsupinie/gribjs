@@ -5,6 +5,12 @@ interface Grib2ProductTableEntry {
     parameterUnits: string;
 }
 
+interface Grib2ProductListingEntry extends Grib2ProductTableEntry {
+    discipline: number;
+    parameterCategory: number;
+    parameterNumber: number;
+}
+
 type Grib2CodeTable = Record<number, Grib2ProductTableEntry>;
 type Grib2DisciplineCodeTable = Record<number, Grib2CodeTable>;
 
@@ -287,4 +293,23 @@ function lookupGrib2Parameter(discipline: number, parameter_category: number, pa
     return parameter;
 }
 
-export {lookupGrib2Parameter};
+function addGrib2ParameterListing(parameter_listing: Grib2ProductListingEntry[]) {
+    parameter_listing.forEach(entry => {
+        if (!(entry.discipline in grib_parameter_lookup)) {
+            grib_parameter_lookup[entry.discipline] = {};
+        }
+
+        if (!(entry.parameterCategory in grib_parameter_lookup[entry.discipline])) {
+            grib_parameter_lookup[entry.discipline][entry.parameterCategory] = {};
+        }
+
+        if (entry.parameterNumber in grib_parameter_lookup[entry.discipline][entry.parameterCategory]) {
+            console.warn('Overwriting previous entry in product table:', grib_parameter_lookup[entry.discipline][entry.parameterCategory][entry.parameterNumber]);
+        }
+
+        grib_parameter_lookup[entry.discipline][entry.parameterCategory][entry.parameterNumber] = {parameterName: entry.parameterName, 
+            parameterAbbrev: entry.parameterAbbrev, parameterUnits: entry.parameterUnits};
+    });
+}
+
+export {lookupGrib2Parameter, addGrib2ParameterListing};
