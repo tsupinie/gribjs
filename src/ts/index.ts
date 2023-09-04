@@ -3,6 +3,7 @@ import { unpackUTF8String } from './grib2base';
 import {Grib2BitmapSection, Grib2DataRepresentationSection, Grib2DataSection, Grib2GridDefinitionSection, Grib2IdentificationSection, Grib2IndicatorSection, 
         Grib2LocalUseSection, Grib2ProductDefinitionSection, g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker,
         g2_section5_unpacker, g2_section6_unpacker, g2_section7_unpacker} from './grib2section';
+import { addGrib2ParameterListing } from './grib2producttables';
 
 class Grib2File {
     readonly headers: Grib2MessageHeaders[];
@@ -29,6 +30,12 @@ class Grib2File {
         }
 
         return new Grib2File(message_headers, buffer);
+    }
+
+    list() {
+        this.headers.forEach(header => {
+            console.log(header.getString());
+        });
     }
 }
 
@@ -100,6 +107,23 @@ class Grib2MessageHeaders {
     async getMessage(buffer: DataView) {
         const data = await this.sec7.unpackData(buffer, this.sec7.offset + 5, this.sec5);
         return new Grib2Message(this.offset, this, data);
+    }
+
+    getString() {
+        const offset = this.offset;
+        const message_length = this.sec0.contents.message_length;
+        const product = this.sec4.getProduct(this.sec0.contents.grib_discipline).parameterAbbrev;
+
+        const surfaces = this.sec4.getSurface();
+        let surfaces_str = "";
+        if (surfaces.surface1) {
+            surfaces_str += `${surfaces.surface1.value} ${surfaces.surface1.coordinate.surfaceUnits} ${surfaces.surface1.coordinate.surfaceName}`;
+        }
+        if (surfaces.surface2) {
+            surfaces_str += `-${surfaces.surface2.value} ${surfaces.surface2.coordinate.surfaceUnits} ${surfaces.surface2.coordinate.surfaceName}`;
+        }
+
+        return `${offset}:${message_length}:${product}:${surfaces_str}`;
     }
 
     get message_length() {
