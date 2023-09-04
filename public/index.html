@@ -2,6 +2,14 @@
 <html>
     <head>
         <script src="grib.js"></script>
+        <script>
+            (async () => {
+                const resp = await fetch('http://localhost:9090/MRMS_MergedReflectivityQCComposite_00.50_20230829-233640.grib2');
+                const buffer = new DataView(await resp.arrayBuffer());
+                const g2_file = await grib.Grib2File.scan(buffer);
+                console.log(await g2_file.getMessage(0));
+            })();
+        </script>
         <style>
             html {
                 background-color: #000000;
