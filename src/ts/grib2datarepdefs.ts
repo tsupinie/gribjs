@@ -39,9 +39,9 @@ const g2_simple_packing_types = {
 
 type Grib2SimplePackingContents = InternalTypeMapper<typeof g2_simple_packing_types>;
 class Grib2SimplePacking extends Grib2Struct<Grib2SimplePackingContents> implements DataRepresentationDefinition {
-    constructor(contents: Grib2SimplePackingContents) {
+    constructor(contents: Grib2SimplePackingContents, offset: number) {
         contents.reference_value = maybeRecastReferenceValue(contents.reference_value, contents.original_data_type);
-        super(contents);
+        super(contents, offset);
     }
 
     async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) : Promise<Float32Array> {
@@ -61,9 +61,9 @@ const g2_png_packing_types = {
 
 type Grib2PNGPackingContents = InternalTypeMapper<typeof g2_png_packing_types>
 class Grib2PNGPacking extends Grib2Struct<Grib2PNGPackingContents> implements DataRepresentationDefinition {
-    constructor(contents: Grib2PNGPackingContents) {
+    constructor(contents: Grib2PNGPackingContents, offset: number) {
         contents.reference_value = maybeRecastReferenceValue(contents.reference_value, contents.original_data_type);
-        super(contents);
+        super(contents, offset);
     }
 
     async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) {

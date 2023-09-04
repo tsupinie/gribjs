@@ -79,9 +79,11 @@ function unpackUTF8String(buf: DataView, offset: number, length: number) {
 
 class Grib2Struct<T> {
     readonly contents: T;
+    readonly offset: number;
 
-    constructor(contents: T) {
+    constructor(contents: T, offset: number) {
         this.contents = contents;
+        this.offset = offset;
     }
 }
 
@@ -89,12 +91,12 @@ interface Unpackable<T> {
     unpack(b: DataView, o: number): T;
 }
 
-function unpackerFactory<T, U extends new(c: Record<keyof T, number | V>) => InstanceType<U>, V>
+function unpackerFactory<T, U extends new(c: Record<keyof T, number | V>, o: number) => InstanceType<U>, V>
         (internal_types: Record<keyof T, Grib2InternalType | Grib2TemplateEnumeration<V>>, return_type: U, unpacker?: (b: DataView, o: number) => InstanceType<U>) {
 
     const default_unpacker = (buf: DataView, offset: number) => {
         const contents = unpackStruct<T, V>(buf, internal_types, offset);
-        return new return_type(contents);
+        return new return_type(contents, offset);
     }
 
     const unpacker_ = unpacker === undefined ? default_unpacker : unpacker;
