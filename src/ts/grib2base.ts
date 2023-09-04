@@ -78,7 +78,7 @@ function unpackUTF8String(buf: DataView, offset: number, length: number) {
 }
 
 class Grib2Struct<T> {
-    contents: T;
+    readonly contents: T;
 
     constructor(contents: T) {
         this.contents = contents;
