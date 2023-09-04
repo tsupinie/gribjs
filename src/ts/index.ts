@@ -117,10 +117,10 @@ class Grib2MessageHeaders {
         const surfaces = this.sec4.getSurface();
         let surfaces_str = "";
         if (surfaces.surface1) {
-            surfaces_str += `${surfaces.surface1.value} ${surfaces.surface1.coordinate.surfaceUnits} ${surfaces.surface1.coordinate.surfaceName}`;
+            surfaces_str += `${surfaces.surface1.value} ${surfaces.surface1.surfaceUnits} ${surfaces.surface1.surfaceName}`;
         }
         if (surfaces.surface2) {
-            surfaces_str += `-${surfaces.surface2.value} ${surfaces.surface2.coordinate.surfaceUnits} ${surfaces.surface2.coordinate.surfaceName}`;
+            surfaces_str += `-${surfaces.surface2.value} ${surfaces.surface2.surfaceUnits} ${surfaces.surface2.surfaceName}`;
         }
 
         return `${offset}:${message_length}:${product}:${surfaces_str}`;

@@ -6,8 +6,7 @@ interface ProductDefinition {
     parameter_number: number;
 }
 
-type SurfaceSpec = {
-    coordinate: Grib2SurfaceTableEntry;
+interface SurfaceSpec extends Grib2SurfaceTableEntry {
     value: number;
 }
 
@@ -56,7 +55,7 @@ class Grib2ForecastAtTime extends ProductDefintionBase implements HorizontalLaye
 
         const value = Math.pow(10, this.contents.fixed_surface_1_scale_factor) * this.contents.fixed_surface_1_value;
         const coordinate = lookupGrib2Surface(this.contents.fixed_surface_1_type);
-        return {value: value, coordinate: coordinate};
+        return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits};
     }
 
     get surface2() {
@@ -66,7 +65,7 @@ class Grib2ForecastAtTime extends ProductDefintionBase implements HorizontalLaye
 
         const value = Math.pow(10, this.contents.fixed_surface_2_scale_factor) * this.contents.fixed_surface_2_value;
         const coordinate = lookupGrib2Surface(this.contents.fixed_surface_2_type);
-        return {value: value, coordinate: coordinate};
+        return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits};
     }
 }
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
