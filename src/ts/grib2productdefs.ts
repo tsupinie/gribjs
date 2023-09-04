@@ -6,17 +6,30 @@ interface ProductDefinition {
     parameter_number: number;
 }
 
-interface SurfaceSpec extends Grib2SurfaceTableEntry {
+interface SurfaceSpec extends Omit<Grib2SurfaceTableEntry, 'surfacePrintFormat'> {
     value: number;
+    printable: string;
 }
 
 interface HorizontalLayer {
-    surface1: SurfaceSpec | null;
-    surface2: SurfaceSpec | null;
+    getSurface1: () => SurfaceSpec | null;
+    getSurface2: () => SurfaceSpec | null;
 }
 
 function isHorizontalLayer(obj: any) : obj is HorizontalLayer {
-    return 'surface1' in obj && 'surface2' in obj;
+    return 'getSurface1' in obj && 'getSurface2' in obj;
+}
+
+function getLayerSpec(surface_type: number, surface_scale_factor: number, surface_value: number) : SurfaceSpec | null {
+    if (surface_type == 255) {
+        return null;
+    }
+
+    const value = Math.pow(10, surface_scale_factor) * surface_value;
+    const coordinate = lookupGrib2Surface(surface_type);
+    const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', value.toString()).replace('{surfaceUnits}', coordinate.surfaceUnits);
+
+    return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits, printable: printable};
 }
 
 const g2_forecast_at_time_types = {
@@ -48,24 +61,12 @@ class ProductDefintionBase extends Grib2Struct<InternalTypeMapper<typeof g2_fore
 }
 
 class Grib2ForecastAtTime extends ProductDefintionBase implements HorizontalLayer {
-    get surface1() {
-        if (this.contents.fixed_surface_1_type == 255) {
-            return null;
-        }
-
-        const value = Math.pow(10, this.contents.fixed_surface_1_scale_factor) * this.contents.fixed_surface_1_value;
-        const coordinate = lookupGrib2Surface(this.contents.fixed_surface_1_type);
-        return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits};
+    getSurface1() {
+        return getLayerSpec(this.contents.fixed_surface_1_type, this.contents.fixed_surface_1_scale_factor, this.contents.fixed_surface_1_value);
     }
 
-    get surface2() {
-        if (this.contents.fixed_surface_2_type == 255) {
-            return null;
-        }
-
-        const value = Math.pow(10, this.contents.fixed_surface_2_scale_factor) * this.contents.fixed_surface_2_value;
-        const coordinate = lookupGrib2Surface(this.contents.fixed_surface_2_type);
-        return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits};
+    getSurface2() {
+        return getLayerSpec(this.contents.fixed_surface_2_type, this.contents.fixed_surface_2_scale_factor, this.contents.fixed_surface_2_value);
     }
 }
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);

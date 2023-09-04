@@ -143,8 +143,8 @@ class Grib2ProductDefinitionSection extends Grib2Struct<Grib2Section4Content> {
             return {};
         }
 
-        const surface1 = this.contents.product_definition_template.surface1;
-        const surface2 = this.contents.product_definition_template.surface2;
+        const surface1 = this.contents.product_definition_template.getSurface1();
+        const surface2 = this.contents.product_definition_template.getSurface2();
         return surface2 === null ? {surface1: surface1} : {surface1: surface1, surface2: surface2};
     }
 }
