@@ -2,7 +2,9 @@
 import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
-import { ProductDefinition, g2_section4_template_unpackers } from "./grib2productdefs";
+import { ProductDefinition, SurfaceSpec, g2_section4_template_unpackers, isHorizontalLayer } from "./grib2productdefs";
+import { lookupGrib2Parameter } from "./grib2producttables";
+import { Grib2SurfaceTableEntry } from "./grib2surfacetables";
 
 /**
  * Grib2 Section 0 (Indicator Section)
@@ -130,6 +132,20 @@ class Grib2ProductDefinitionSection extends Grib2Struct<Grib2Section4Content> {
         }
 
         super(contents);
+    }
+
+    getProduct(discipline: number) {
+        return lookupGrib2Parameter(discipline, this.contents.product_definition_template.parameter_category, this.contents.product_definition_template.parameter_number);
+    }
+
+    getSurface(): {surface1?: SurfaceSpec, surface2?: SurfaceSpec} {
+        if (!isHorizontalLayer(this.contents.product_definition_template)) {
+            return {};
+        }
+
+        const surface1 = this.contents.product_definition_template.surface1;
+        const surface2 = this.contents.product_definition_template.surface2;
+        return surface2 === null ? {surface1: surface1} : {surface1: surface1, surface2: null};
     }
 }
 

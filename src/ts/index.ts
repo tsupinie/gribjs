@@ -55,6 +55,8 @@ class Grib2Message {
         console.log(sec2);
         console.log(sec3);
         console.log(sec4);
+        console.log(sec4.getProduct(sec0.contents.grib_discipline));
+        console.log(sec4.getSurface());
         console.log(sec5);
         console.log(sec6);
         console.log(sec7);
