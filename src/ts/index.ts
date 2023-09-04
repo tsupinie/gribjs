@@ -33,8 +33,8 @@ class Grib2File {
     }
 
     list() {
-        this.headers.forEach(header => {
-            console.log(header.getString());
+        this.headers.forEach((header, ihdr) => {
+            console.log(header.getString(ihdr));
         });
     }
 }
@@ -109,21 +109,20 @@ class Grib2MessageHeaders {
         return new Grib2Message(this.offset, this, data);
     }
 
-    getString() {
+    getString(index: number) {
         const offset = this.offset;
-        const message_length = this.sec0.contents.message_length;
         const product = this.sec4.getProduct(this.sec0.contents.grib_discipline).parameterAbbrev;
 
         const surfaces = this.sec4.getSurface();
         let surfaces_str = "";
         if (surfaces.surface1) {
-            surfaces_str += `${surfaces.surface1.value} ${surfaces.surface1.surfaceUnits} ${surfaces.surface1.surfaceName}`;
+            surfaces_str += surfaces.surface1.printable;
         }
         if (surfaces.surface2) {
-            surfaces_str += `-${surfaces.surface2.value} ${surfaces.surface2.surfaceUnits} ${surfaces.surface2.surfaceName}`;
+            surfaces_str += `-${surfaces.surface1.printable}`;
         }
 
-        return `${offset}:${message_length}:${product}:${surfaces_str}`;
+        return `${index + 1}:${offset}:${product}:${surfaces_str}`;
     }
 
     get message_length() {
