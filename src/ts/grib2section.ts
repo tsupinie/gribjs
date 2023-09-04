@@ -1,8 +1,9 @@
 
+import { Duration } from "luxon";
 import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
-import { ProductDefinition, SurfaceSpec, g2_section4_template_unpackers, isHorizontalLayer } from "./grib2productdefs";
+import { ProductDefinition, SurfaceSpec, g2_section4_template_unpackers, isAnalysisOrForecast, isHorizontalLayer } from "./grib2productdefs";
 import { lookupGrib2Parameter } from "./grib2producttables";
 import { Grib2SurfaceTableEntry } from "./grib2surfacetables";
 
@@ -146,6 +147,14 @@ class Grib2ProductDefinitionSection extends Grib2Struct<Grib2Section4Content> {
         const surface1 = this.contents.product_definition_template.getSurface1();
         const surface2 = this.contents.product_definition_template.getSurface2();
         return surface2 === null ? {surface1: surface1} : {surface1: surface1, surface2: surface2};
+    }
+
+    getForecastTime() {
+        if (!isAnalysisOrForecast(this.contents.product_definition_template)) {
+            return Duration.invalid('No forecast time in this template');
+        }
+
+        return this.contents.product_definition_template.getForecastTime();
     }
 }
 

@@ -4,6 +4,7 @@ import {Grib2BitmapSection, Grib2DataRepresentationSection, Grib2DataSection, Gr
         Grib2LocalUseSection, Grib2ProductDefinitionSection, g2_section0_unpacker, g2_section1_unpacker, g2_section2_unpacker, g2_section3_unpacker, g2_section4_unpacker,
         g2_section5_unpacker, g2_section6_unpacker, g2_section7_unpacker} from './grib2section';
 import { addGrib2ParameterListing } from './grib2producttables';
+import { DurationObjectUnits } from 'luxon';
 
 class Grib2File {
     readonly headers: Grib2MessageHeaders[];
@@ -122,7 +123,12 @@ class Grib2MessageHeaders {
             surfaces_str += `-${surfaces.surface1.printable}`;
         }
 
-        return `${index + 1}:${offset}:${product}:${surfaces_str}`;
+        const fcst_time = this.sec4.getForecastTime();
+        const fcst_time_obj = fcst_time.toObject();
+        const fcst_time_unit = Object.keys(fcst_time_obj)[0] as keyof DurationObjectUnits;
+        const fcst_time_str = fcst_time.toMillis() == 0 ? 'anl' : `${fcst_time_obj[fcst_time_unit]} ${fcst_time_unit.slice(0, -1)} fcst`;
+
+        return `${index + 1}:${offset}:${product}:${surfaces_str}:${fcst_time_str}:`;
     }
 
     get message_length() {
