@@ -43,7 +43,7 @@ interface ProductDefinition {
     parameter_number: number;
 }
 
-class ProductDefintionBase<T extends {parameter_category: number, parameter_number: number}> extends Grib2Struct<T> implements ProductDefinition {
+class ProductDefinitionBase<T extends {parameter_category: number, parameter_number: number}> extends Grib2Struct<T> implements ProductDefinition {
     get parameter_category() {
         return this.contents.parameter_category;
     }
@@ -70,7 +70,7 @@ function horizontalLayerProduct<T extends ConstructorWithSurfaces>(base: T) {
     }
 }
 
-const HorizontalLayerProduct = horizontalLayerProduct(ProductDefintionBase);
+const HorizontalLayerProduct = horizontalLayerProduct(ProductDefinitionBase);
 function isHorizontalLayerProduct(obj: any) : obj is InstanceType<typeof HorizontalLayerProduct> {
     return 'getSurface1' in obj && 'getSurface2' in obj;
 }
@@ -91,7 +91,7 @@ function analysisOrForecastProduct<T extends ConstructorWithForecastTime>(base: 
     }
 }
 
-const AnalysisOrForecastProduct = analysisOrForecastProduct(ProductDefintionBase);
+const AnalysisOrForecastProduct = analysisOrForecastProduct(ProductDefinitionBase);
 function isAnalysisOrForecastProduct(obj: any) : obj is InstanceType<typeof AnalysisOrForecastProduct> {
     return 'getForecastTime' in obj;
 }
@@ -117,7 +117,7 @@ const g2_forecast_at_time_types = {
     fixed_surface_2_value: G2UInt4,
 }
 
-class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefintionBase<InternalTypeMapper<typeof g2_forecast_at_time_types>>)) {}
+class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_at_time_types>>)) {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
 const g2_section4_template_unpackers: Grib2TemplateEnumeration<ProductDefinition> = {
