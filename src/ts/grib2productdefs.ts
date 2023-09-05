@@ -1,25 +1,11 @@
-import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
+import { Constructor, G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
 import { Grib2SurfaceTableEntry, lookupGrib2Surface } from "./grib2surfacetables";
 
 import {Duration} from 'luxon';
 
-interface ProductDefinition {
-    parameter_category: number;
-    parameter_number: number;
-}
-
 interface SurfaceSpec extends Omit<Grib2SurfaceTableEntry, 'surfacePrintFormat'> {
     value: number;
     printable: string;
-}
-
-interface HorizontalLayer {
-    getSurface1: () => SurfaceSpec | null;
-    getSurface2: () => SurfaceSpec | null;
-}
-
-function isHorizontalLayer(obj: any) : obj is HorizontalLayer {
-    return 'getSurface1' in obj && 'getSurface2' in obj;
 }
 
 function getLayerSpec(surface_type: number, surface_scale_factor: number, surface_value: number) : SurfaceSpec | null {
@@ -32,14 +18,6 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
     const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', value.toString()).replace('{surfaceUnits}', coordinate.surfaceUnits);
 
     return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits, printable: printable};
-}
-
-interface AnalysisOrForecast {
-    getForecastTime(): Duration;
-}
-
-function isAnalysisOrForecast(obj: any) : obj is AnalysisOrForecast {
-    return 'getForecastTime' in obj;
 }
 
 const time_range_unit_iso: Record<number, string> = {
@@ -57,6 +35,9 @@ const time_range_unit_iso: Record<number, string> = {
     13: 'PT1S',
 }
 
+/**
+ * Base class
+ */
 const g2_forecast_at_time_types = {
     parameter_category: G2UInt1,
     parameter_number: G2UInt1,
@@ -75,6 +56,11 @@ const g2_forecast_at_time_types = {
     fixed_surface_2_value: G2UInt4,
 }
 
+interface ProductDefinition {
+    parameter_category: number;
+    parameter_number: number;
+}
+
 class ProductDefintionBase extends Grib2Struct<InternalTypeMapper<typeof g2_forecast_at_time_types>> implements ProductDefinition {
     get parameter_category() {
         return this.contents.parameter_category;
@@ -85,28 +71,58 @@ class ProductDefintionBase extends Grib2Struct<InternalTypeMapper<typeof g2_fore
     }
 }
 
-class Grib2ForecastAtTime extends ProductDefintionBase implements HorizontalLayer, AnalysisOrForecast {
-    getSurface1() {
-        return getLayerSpec(this.contents.fixed_surface_1_type, this.contents.fixed_surface_1_scale_factor, this.contents.fixed_surface_1_value);
-    }
-
-    getSurface2() {
-        return getLayerSpec(this.contents.fixed_surface_2_type, this.contents.fixed_surface_2_scale_factor, this.contents.fixed_surface_2_value);
-    }
-
-    getForecastTime() {
-        if (!(this.contents.time_range_unit in time_range_unit_iso)) {
-            throw `Time range unit ${this.contents.time_range_unit} is unknown`
+/**
+ * Horizontal tayer mixin
+ */
+type ConstructorWithSurfaces = Constructor<Grib2Struct<{fixed_surface_1_type: number, fixed_surface_1_scale_factor: number, fixed_surface_1_value: number, 
+                                                        fixed_surface_2_type: number, fixed_surface_2_scale_factor: number, fixed_surface_2_value: number}>>;
+function horizontalLayerProduct<T extends ConstructorWithSurfaces>(base: T) {
+    return class extends base {
+        getSurface1() {
+            return getLayerSpec(this.contents.fixed_surface_1_type, this.contents.fixed_surface_1_scale_factor, this.contents.fixed_surface_1_value);
         }
 
-        return Duration.fromISO(time_range_unit_iso[this.contents.time_range_unit]).mapUnits(u => u * this.contents.forecast_time);
+        getSurface2() {
+            return getLayerSpec(this.contents.fixed_surface_2_type, this.contents.fixed_surface_2_scale_factor, this.contents.fixed_surface_2_value);
+        }
     }
 }
+
+const HorizontalLayerProduct = horizontalLayerProduct(ProductDefintionBase);
+function isHorizontalLayerProduct(obj: any) : obj is InstanceType<typeof HorizontalLayerProduct> {
+    return 'getSurface1' in obj && 'getSurface2' in obj;
+}
+
+/**
+ * Forecast time mixin
+ */
+type ConstructorWithForecastTime = Constructor<Grib2Struct<{time_range_unit: number, forecast_time: number}>>;
+function analysisOrForecastProduct<T extends ConstructorWithForecastTime>(base: T) {
+    return class extends base {
+        getForecastTime() {
+            if (!(this.contents.time_range_unit in time_range_unit_iso)) {
+                throw `Time range unit ${this.contents.time_range_unit} is unknown`
+            }
+    
+            return Duration.fromISO(time_range_unit_iso[this.contents.time_range_unit]).mapUnits(u => u * this.contents.forecast_time);
+        }
+    }
+}
+
+const AnalysisOrForecastProduct = analysisOrForecastProduct(ProductDefintionBase);
+function isAnalysisOrForecastProduct(obj: any) : obj is InstanceType<typeof AnalysisOrForecastProduct> {
+    return 'getForecastTime' in obj;
+}
+
+/**
+ * Template definitions
+ */
+class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefintionBase)) {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
 const g2_section4_template_unpackers: Grib2TemplateEnumeration<ProductDefinition> = {
     0: g2_forecast_at_time_unpacker,
-}
+};
 
-export {g2_section4_template_unpackers, isHorizontalLayer, isAnalysisOrForecast};
+export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct};
 export type {ProductDefinition, SurfaceSpec};
