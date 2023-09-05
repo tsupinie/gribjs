@@ -38,30 +38,12 @@ const time_range_unit_iso: Record<number, string> = {
 /**
  * Base class
  */
-const g2_forecast_at_time_types = {
-    parameter_category: G2UInt1,
-    parameter_number: G2UInt1,
-    generating_process_type: G2UInt1,
-    generating_process_identifier: G2UInt1,
-    generating_process: G2UInt1,
-    obs_data_cutoff_hours: G2UInt2,
-    obs_data_cutoff_minutes: G2UInt1,
-    time_range_unit: G2UInt1,
-    forecast_time: G2UInt4,
-    fixed_surface_1_type: G2UInt1,
-    fixed_surface_1_scale_factor: G2UInt1,
-    fixed_surface_1_value: G2UInt4,
-    fixed_surface_2_type: G2UInt1,
-    fixed_surface_2_scale_factor: G2UInt1,
-    fixed_surface_2_value: G2UInt4,
-}
-
 interface ProductDefinition {
     parameter_category: number;
     parameter_number: number;
 }
 
-class ProductDefintionBase extends Grib2Struct<InternalTypeMapper<typeof g2_forecast_at_time_types>> implements ProductDefinition {
+class ProductDefintionBase<T extends {parameter_category: number, parameter_number: number}> extends Grib2Struct<T> implements ProductDefinition {
     get parameter_category() {
         return this.contents.parameter_category;
     }
@@ -72,7 +54,7 @@ class ProductDefintionBase extends Grib2Struct<InternalTypeMapper<typeof g2_fore
 }
 
 /**
- * Horizontal tayer mixin
+ * Horizontal layer mixin
  */
 type ConstructorWithSurfaces = Constructor<Grib2Struct<{fixed_surface_1_type: number, fixed_surface_1_scale_factor: number, fixed_surface_1_value: number, 
                                                         fixed_surface_2_type: number, fixed_surface_2_scale_factor: number, fixed_surface_2_value: number}>>;
@@ -117,7 +99,25 @@ function isAnalysisOrForecastProduct(obj: any) : obj is InstanceType<typeof Anal
 /**
  * Template definitions
  */
-class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefintionBase)) {}
+const g2_forecast_at_time_types = {
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
+}
+
+class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefintionBase<InternalTypeMapper<typeof g2_forecast_at_time_types>>)) {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
 const g2_section4_template_unpackers: Grib2TemplateEnumeration<ProductDefinition> = {
