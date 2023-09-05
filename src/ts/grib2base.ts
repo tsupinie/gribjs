@@ -110,9 +110,10 @@ function unpackerFactory<T, U extends new(c: Record<keyof T, number | V>, o: num
     return new Factory();
 }
 
+type Constructor<T> = new(...args: any[]) => T;
 type InternalTypeMapper<T, U=never, V=never> = {
     [K in keyof T]: K extends U ? V : number;
 }
 
 export {Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8};
-export type {Grib2InternalType, Grib2TemplateEnumeration, Grib2Content, Grib2ContentSpecTemplate, Unpackable, InternalTypeMapper};
+export type {Grib2InternalType, Grib2TemplateEnumeration, Grib2Content, Grib2ContentSpecTemplate, Unpackable, InternalTypeMapper, Constructor};

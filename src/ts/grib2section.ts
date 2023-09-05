@@ -1,11 +1,22 @@
 
 import { Duration } from "luxon";
-import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper } from "./grib2base";
+import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper, Constructor } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
 import { ProductDefinition, SurfaceSpec, g2_section4_template_unpackers, isAnalysisOrForecast, isHorizontalLayer } from "./grib2productdefs";
 import { lookupGrib2Parameter } from "./grib2producttables";
-import { Grib2SurfaceTableEntry } from "./grib2surfacetables";
+
+type ConstructorWithSectionNumber = Constructor<Grib2Struct<{section_number: number}>>;
+
+function sectionNumberCheck<T extends ConstructorWithSectionNumber>(base: T, expected_section_number: number) {
+    return class extends base {
+        checkSectionNumber() {
+            if (this.contents.section_number != expected_section_number) {
+                throw `Expected section ${expected_section_number}, got ${this.contents.section_number}`;
+            }
+        }
+    }
+}
 
 /**
  * Grib2 Section 0 (Indicator Section)
@@ -59,13 +70,10 @@ const g2_section1_types = {
 };
 
 type Grib2Section1Content = InternalTypeMapper<typeof g2_section1_types>;
-class Grib2IdentificationSection extends Grib2Struct<Grib2Section1Content> {
+class Grib2IdentificationSection extends sectionNumberCheck(Grib2Struct<Grib2Section1Content>, 1) {
     constructor(contents: Grib2Section1Content, offset: number) {
-        if (contents.section_number != 1) {
-            throw `Expected section 1, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 }
 const g2_section1_unpacker = unpackerFactory(g2_section1_types, Grib2IdentificationSection);
@@ -79,13 +87,10 @@ const g2_section2_types = {
 }
 
 type Grib2Section2Content = InternalTypeMapper<typeof g2_section2_types>;
-class Grib2LocalUseSection extends Grib2Struct<Grib2Section2Content> {
+class Grib2LocalUseSection extends sectionNumberCheck(Grib2Struct<Grib2Section2Content>, 2) {
     constructor(contents: Grib2Section2Content, offset: number) {
-        if (contents.section_number != 2) {
-            throw `Expected section 2, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 }
 const g2_section2_unpacker = unpackerFactory(g2_section2_types, Grib2LocalUseSection);
@@ -104,13 +109,10 @@ const g2_section3_types = {
 };
 
 type Grib2Section3Content = InternalTypeMapper<typeof g2_section3_types, 'grid_definition_template', GridDefinition>;
-class Grib2GridDefinitionSection extends Grib2Struct<Grib2Section3Content> {
+class Grib2GridDefinitionSection extends sectionNumberCheck(Grib2Struct<Grib2Section3Content>, 3) {
     constructor(contents: Grib2Section3Content, offset: number) {
-        if (contents.section_number != 3) {
-            throw `Expected section 3, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 }
 const g2_section3_unpacker = unpackerFactory(g2_section3_types, Grib2GridDefinitionSection);
@@ -126,13 +128,10 @@ const g2_section4_types = {
 }
 
 type Grib2Section4Content = InternalTypeMapper<typeof g2_section4_types, 'product_definition_template', ProductDefinition>;
-class Grib2ProductDefinitionSection extends Grib2Struct<Grib2Section4Content> {
+class Grib2ProductDefinitionSection extends sectionNumberCheck(Grib2Struct<Grib2Section4Content>, 4) {
     constructor(contents: Grib2Section4Content, offset: number) {
-        if (contents.section_number != 4) {
-            throw `Expected section 4, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 
     getProduct(discipline: number) {
@@ -171,13 +170,10 @@ const g2_section5_types = {
 }
 
 type Grib2Section5Content = InternalTypeMapper<typeof g2_section5_types, 'data_representation_template', DataRepresentationDefinition>;
-class Grib2DataRepresentationSection extends Grib2Struct<Grib2Section5Content> {
+class Grib2DataRepresentationSection extends sectionNumberCheck(Grib2Struct<Grib2Section5Content>, 5) {
     constructor(contents: Grib2Section5Content, offset: number) {
-        if (contents.section_number != 5) {
-            throw `Expected section 5, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 }
 
@@ -193,13 +189,10 @@ const g2_section6_types = {
 }
 
 type Grib2Section6Content = InternalTypeMapper<typeof g2_section6_types>;
-class Grib2BitmapSection extends Grib2Struct<Grib2Section6Content> {
+class Grib2BitmapSection extends sectionNumberCheck(Grib2Struct<Grib2Section6Content>, 6) {
     constructor(contents: Grib2Section6Content, offset: number) {
-        if (contents.section_number != 6) {
-            throw `Expected section 6, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 }
 
@@ -214,13 +207,10 @@ const g2_section7_types = {
 }
 
 type Grib2Section7Content = InternalTypeMapper<typeof g2_section7_types>;
-class Grib2DataSection extends Grib2Struct<Grib2Section7Content> {
+class Grib2DataSection extends sectionNumberCheck(Grib2Struct<Grib2Section7Content>, 7) {
     constructor(contents: Grib2Section7Content, offset: number) {
-        if (contents.section_number != 7) {
-            throw `Expected section 7, got ${contents.section_number}`
-        }
-
         super(contents, offset);
+        this.checkSectionNumber();
     }
 
     unpackData(buffer: DataView, offset: number, sec5: Grib2DataRepresentationSection) {
