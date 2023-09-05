@@ -175,6 +175,10 @@ class Grib2DataRepresentationSection extends sectionNumberCheck(Grib2Struct<Grib
         super(contents, offset);
         this.checkSectionNumber();
     }
+
+    get unpackData() {
+        return (buffer: DataView, offset: number, packed_len: number) => this.contents.data_representation_template.unpackData(buffer, offset, packed_len, this.contents.number_of_data_points);
+    }
 }
 
 const g2_section5_unpacker = unpackerFactory(g2_section5_types, Grib2DataRepresentationSection);
@@ -214,7 +218,7 @@ class Grib2DataSection extends sectionNumberCheck(Grib2Struct<Grib2Section7Conte
     }
 
     unpackData(buffer: DataView, offset: number, sec5: Grib2DataRepresentationSection) {
-        return sec5.contents.data_representation_template.unpackData(buffer, offset, this.contents.section_length - 5, sec5.contents.number_of_data_points);
+        return sec5.unpackData(buffer, offset, this.contents.section_length - 5);
     }
 }
 
