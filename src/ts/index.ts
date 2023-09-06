@@ -134,6 +134,10 @@ class Grib2MessageHeaders {
     get message_length() {
         return this.sec0.contents.message_length;
     }
+
+    getReferenceTime() {
+        return this.sec1.getReferenceTime();
+    }
 }
 
 class Grib2Message {
@@ -145,6 +149,10 @@ class Grib2Message {
         this.offset = offset;
         this.headers = headers;
         this.data = data;
+    }
+
+    getReferenceTime() {
+        return this.headers.getReferenceTime();
     }
 }
 

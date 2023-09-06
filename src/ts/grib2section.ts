@@ -1,5 +1,5 @@
 
-import { Duration } from "luxon";
+import { DateTime, Duration } from "luxon";
 import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper, Constructor } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
@@ -74,6 +74,11 @@ class Grib2IdentificationSection extends sectionNumberCheck(Grib2Struct<Grib2Sec
     constructor(contents: Grib2Section1Content, offset: number) {
         super(contents, offset);
         this.checkSectionNumber();
+    }
+
+    getReferenceTime() {
+        return DateTime.utc(this.contents.reference_year, this.contents.reference_month, this.contents.reference_day, 
+                            this.contents.reference_hour, this.contents.reference_minute, this.contents.reference_second);
     }
 }
 const g2_section1_unpacker = unpackerFactory(g2_section1_types, Grib2IdentificationSection);
