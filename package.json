@@ -5,6 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "webpack serve --open --mode=development",
+    "build-dist": "webpack --mode=production",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Tim Supinie <tsupinie@gmail.com>",
