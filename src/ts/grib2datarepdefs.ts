@@ -81,6 +81,9 @@ class Grib2PNGPacking extends Grib2Struct<Grib2PNGPackingContents> implements Da
         else if (this.contents.bit_depth === 32) {
             output = await pngDecoder(data, this.contents.bit_depth, expected_size);
         }
+        else {
+            throw `PNG packing bit depth ${this.contents.bit_depth} is not supported`;
+        }
 
         return unpackScaling(output, this.contents.reference_value, this.contents.binary_scale_factor, this.contents.decimal_scale_factor, this.contents.original_data_type);
     }
