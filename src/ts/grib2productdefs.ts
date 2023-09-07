@@ -120,8 +120,136 @@ const g2_forecast_at_time_types = {
 class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_at_time_types>>)) {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
+
+const g2_ens_forecast_at_time_types = {
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
+    ensemble_type: G2UInt1,
+    ensemble_perturbation_number: G2UInt1,
+    ensemble_size: G2UInt1,
+}
+
+class Grib2EnsForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_at_time_types>>)) {}
+const g2_ens_forecast_at_time_unpacker = unpackerFactory(g2_ens_forecast_at_time_types, Grib2EnsForecastAtTime);
+
+
+const g2_derived_ens_forecast_at_time_types = {
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
+    derived_forecast_type: G2UInt1,
+    ensemble_size: G2UInt1,
+}
+
+class Grib2DerivedEnsForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_derived_ens_forecast_at_time_types>>)) {}
+const g2_derived_ens_forecast_at_time_unpacker = unpackerFactory(g2_derived_ens_forecast_at_time_types, Grib2DerivedEnsForecastAtTime);
+
+
+const g2_forecast_agg_over_time_types = {
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
+    interval_end_year: G2UInt2,
+    interval_end_month: G2UInt1,
+    interval_end_day: G2UInt1,
+    interval_end_hour: G2UInt1,
+    interval_end_minute: G2UInt1,
+    interval_end_second: G2UInt1,
+    number_of_agg_intervals: G2UInt1,
+    number_of_missing_values: G2UInt4,
+    agg_process_type: G2UInt1,
+    agg_sample_increment_type: G2UInt1,
+    agg_interval_time_range_unit: G2UInt1,
+    agg_interval_length: G2UInt4,
+    agg_sample_time_range_unit: G2UInt1,
+    agg_sample_interval_length: G2UInt4,
+}
+
+class Grib2ForecastAggOverTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_agg_over_time_types>>)) {}
+const g2_forecast_agg_over_time_unpacker = unpackerFactory(g2_forecast_agg_over_time_types, Grib2ForecastAggOverTime);
+
+
+const g2_ens_forecast_agg_over_time_types = {
+    parameter_category: G2UInt1,
+    parameter_number: G2UInt1,
+    generating_process_type: G2UInt1,
+    generating_process_identifier: G2UInt1,
+    generating_process: G2UInt1,
+    obs_data_cutoff_hours: G2UInt2,
+    obs_data_cutoff_minutes: G2UInt1,
+    time_range_unit: G2UInt1,
+    forecast_time: G2UInt4,
+    fixed_surface_1_type: G2UInt1,
+    fixed_surface_1_scale_factor: G2UInt1,
+    fixed_surface_1_value: G2UInt4,
+    fixed_surface_2_type: G2UInt1,
+    fixed_surface_2_scale_factor: G2UInt1,
+    fixed_surface_2_value: G2UInt4,
+    ensemble_type: G2UInt1,
+    ensemble_perturbation_number: G2UInt1,
+    ensemble_size: G2UInt1,
+    interval_end_year: G2UInt2,
+    interval_end_month: G2UInt1,
+    interval_end_day: G2UInt1,
+    interval_end_hour: G2UInt1,
+    interval_end_minute: G2UInt1,
+    interval_end_second: G2UInt1,
+    number_of_agg_intervals: G2UInt1,
+    number_of_missing_values: G2UInt4,
+    agg_process_type: G2UInt1,
+    agg_sample_increment_type: G2UInt1,
+    agg_interval_time_range_unit: G2UInt1,
+    agg_interval_length: G2UInt4,
+    agg_sample_time_range_unit: G2UInt1,
+    agg_sample_interval_length: G2UInt4,
+}
+
+class Grib2EnsForecastAggOverTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_agg_over_time_types>>)) {}
+const g2_ens_forecast_agg_over_time_unpacker = unpackerFactory(g2_ens_forecast_agg_over_time_types, Grib2EnsForecastAggOverTime);
+
 const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefinition>('product definition template', {
     0: g2_forecast_at_time_unpacker,
+    1: g2_ens_forecast_at_time_unpacker,
+    2: g2_derived_ens_forecast_at_time_unpacker,
+    8: g2_forecast_agg_over_time_unpacker,
+    11: g2_ens_forecast_agg_over_time_unpacker,
 });
 
 export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct};

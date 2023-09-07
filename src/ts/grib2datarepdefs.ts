@@ -51,6 +51,77 @@ class Grib2SimplePacking extends Grib2Struct<Grib2SimplePackingContents> impleme
 
 const g2_simple_packing_unpacker = unpackerFactory(g2_simple_packing_types, Grib2SimplePacking);
 
+
+const g2_complex_packing_types = {
+    reference_value: G2UInt4,
+    binary_scale_factor: G2UInt2,
+    decimal_scale_factor: G2UInt2,
+    number_of_bits: G2UInt1,
+    original_data_type: G2UInt1,
+    group_splitting_method: G2UInt1,
+    missing_value_method: G2UInt1,
+    primary_missing_value: G2UInt4,
+    secondary_missing_value: G2UInt4,
+    number_of_groups: G2UInt4,
+    group_width_reference: G2UInt1,
+    group_width_bits: G2UInt1,
+    group_length_reference: G2UInt4,
+    group_length_increment: G2UInt1,
+    last_group_length: G2UInt4,
+    group_length_bits: G2UInt1,
+}
+
+type Grib2ComplexPackingContents = InternalTypeMapper<typeof g2_complex_packing_types>;
+class Grib2ComplexPacking extends Grib2Struct<Grib2ComplexPackingContents> implements DataRepresentationDefinition {
+    constructor(contents: Grib2ComplexPackingContents, offset: number) {
+        contents.reference_value = maybeRecastReferenceValue(contents.reference_value, contents.original_data_type);
+        super(contents, offset);
+    }
+
+    async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) : Promise<Float32Array> {
+        throw "Complex (un)packing not implemented yet";
+    }
+}
+
+const g2_complex_packing_unpacker = unpackerFactory(g2_complex_packing_types, Grib2ComplexPacking);
+
+
+const g2_complex_packing_differencing_types = {
+    reference_value: G2UInt4,
+    binary_scale_factor: G2UInt2,
+    decimal_scale_factor: G2UInt2,
+    number_of_bits: G2UInt1,
+    original_data_type: G2UInt1,
+    group_splitting_method: G2UInt1,
+    missing_value_method: G2UInt1,
+    primary_missing_value: G2UInt4,
+    secondary_missing_value: G2UInt4,
+    number_of_groups: G2UInt4,
+    group_width_reference: G2UInt1,
+    group_width_bits: G2UInt1,
+    group_length_reference: G2UInt4,
+    group_length_increment: G2UInt1,
+    last_group_length: G2UInt4,
+    group_length_bits: G2UInt1,
+    spatial_difference_order: G2UInt1,
+    descriptor_bytes: G2UInt1,
+}
+
+type Grib2ComplexPackingDifferencingContents = InternalTypeMapper<typeof g2_complex_packing_differencing_types>;
+class Grib2ComplexPackingDifferencing extends Grib2Struct<Grib2ComplexPackingDifferencingContents> implements DataRepresentationDefinition {
+    constructor(contents: Grib2ComplexPackingDifferencingContents, offset: number) {
+        contents.reference_value = maybeRecastReferenceValue(contents.reference_value, contents.original_data_type);
+        super(contents, offset);
+    }
+
+    async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) : Promise<Float32Array> {
+        throw "Complex (un)packing with spatial differencing not implemented yet";
+    }
+}
+
+const g2_complex_packing_differencing_unpacker = unpackerFactory(g2_complex_packing_differencing_types, Grib2ComplexPackingDifferencing);
+
+
 const g2_png_packing_types = {
     reference_value: G2UInt4,
     binary_scale_factor: G2UInt2,
@@ -93,6 +164,8 @@ const g2_png_packing_unpacker = unpackerFactory(g2_png_packing_types, Grib2PNGPa
 
 const g2_section5_template_unpackers = new Grib2TemplateEnumeration<DataRepresentationDefinition>('data representation template', {
     0: g2_simple_packing_unpacker,
+    2: g2_complex_packing_unpacker,
+    3: g2_complex_packing_differencing_unpacker,
     41: g2_png_packing_unpacker,
 });
 
