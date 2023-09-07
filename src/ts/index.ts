@@ -38,6 +38,11 @@ class Grib2File {
             console.log(header.getString(ihdr));
         });
     }
+
+    search(matcher: string | RegExp) {
+        const matching_headers = this.headers.filter((hdr, ihdr) => hdr.matches(ihdr, matcher));
+        return new Grib2File(matching_headers, this.buffer);
+    }
 }
 
 class Grib2MessageHeaders {
@@ -133,6 +138,10 @@ class Grib2MessageHeaders {
 
     get message_length() {
         return this.sec0.contents.message_length;
+    }
+
+    matches(index: number, matcher: string | RegExp) {
+        return this.getString(index).match(matcher) !== null;
     }
 
     getReferenceTime() {
