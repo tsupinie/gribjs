@@ -83,11 +83,6 @@ class Grib2Inventory {
         for (let i = 0; i < byte_ranges.length; i++) {
             if (cur_range === null) {
                 cur_range = [...byte_ranges[i]] as [number, number];
-                continue;
-            }
-
-            if (i == byte_ranges.length - 1) {
-                byte_ranges_merged.push(cur_range);
             }
             else {
                 if (cur_range[1] == byte_ranges[i][0]) {
@@ -97,6 +92,10 @@ class Grib2Inventory {
                     byte_ranges_merged.push(cur_range);
                     cur_range = null;
                 }
+            }
+
+            if (i == byte_ranges.length - 1 && cur_range !== null) {
+                byte_ranges_merged.push(cur_range);
             }
         }
 
