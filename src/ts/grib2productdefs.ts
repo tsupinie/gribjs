@@ -120,9 +120,9 @@ const g2_forecast_at_time_types = {
 class Grib2ForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_at_time_types>>)) {}
 const g2_forecast_at_time_unpacker = unpackerFactory(g2_forecast_at_time_types, Grib2ForecastAtTime);
 
-const g2_section4_template_unpackers: Grib2TemplateEnumeration<ProductDefinition> = {
+const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefinition>('product definition template', {
     0: g2_forecast_at_time_unpacker,
-};
+});
 
 export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct};
 export type {ProductDefinition, SurfaceSpec};

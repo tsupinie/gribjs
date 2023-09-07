@@ -91,10 +91,10 @@ class Grib2PNGPacking extends Grib2Struct<Grib2PNGPackingContents> implements Da
 
 const g2_png_packing_unpacker = unpackerFactory(g2_png_packing_types, Grib2PNGPacking);
 
-const g2_section5_template_unpackers: Grib2TemplateEnumeration<DataRepresentationDefinition> = {
+const g2_section5_template_unpackers = new Grib2TemplateEnumeration<DataRepresentationDefinition>('data representation template', {
     0: g2_simple_packing_unpacker,
     41: g2_png_packing_unpacker,
-}
+});
 
 export {g2_section5_template_unpackers};
 export type {DataRepresentationDefinition};

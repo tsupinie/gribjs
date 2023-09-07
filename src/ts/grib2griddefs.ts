@@ -56,10 +56,10 @@ const g2_lambert_conformal_types = {
 class Grib2LambertConformalGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_lambert_conformal_types>> implements GridDefinition {}
 const g2_lambert_conformal_grid_unpacker = unpackerFactory(g2_lambert_conformal_types, Grib2LambertConformalGridDefinition);
 
-const section3_template_unpackers: Grib2TemplateEnumeration<GridDefinition> = {
+const section3_template_unpackers = new Grib2TemplateEnumeration<GridDefinition>('grid definition template', {
     0: g2_plate_carree_grid_unpacker,
     30: g2_lambert_conformal_grid_unpacker,
-};
+});
 
 export {section3_template_unpackers};
 export type {GridDefinition};
