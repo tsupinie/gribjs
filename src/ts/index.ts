@@ -45,6 +45,119 @@ class Grib2File {
     }
 }
 
+class Grib2InventoryEntry {
+    readonly byte_range: [number, number | null];
+    readonly inv_string: string;
+
+    constructor(byte_range: [number, number | null], inv_string: string) {
+        this.byte_range = byte_range;
+        this.inv_string = inv_string;
+    }
+
+    matches(matcher: string | RegExp) {
+        return this.inv_string.match(matcher) !== null;
+    }
+
+    static parseByteOffset(inv_string: string) {
+        return parseInt(inv_string.split(':')[1]);
+    }
+}
+
+class Grib2Inventory {
+    readonly entries: Grib2InventoryEntry[];
+
+    constructor(entries: Grib2InventoryEntry[]) {
+        this.entries = entries;
+    }
+
+    search(matcher: string | RegExp) {
+        return new Grib2Inventory(this.entries.filter(entr => entr.matches(matcher)));
+    }
+
+    async downloadData(url: string) {
+        const byte_ranges = this.entries.map(entr => entr.byte_range);
+        const byte_ranges_merged: [number, number][] = [];
+        let cur_range: [number, number] | null = null;
+
+        // Merge adjacent byte ranges
+        for (let i = 0; i < byte_ranges.length; i++) {
+            if (cur_range === null) {
+                cur_range = [...byte_ranges[i]] as [number, number];
+                continue;
+            }
+
+            if (i == byte_ranges.length - 1) {
+                byte_ranges_merged.push(cur_range);
+            }
+            else {
+                if (cur_range[1] == byte_ranges[i][0]) {
+                    cur_range[1] = byte_ranges[i][1];
+                }
+                else {
+                    byte_ranges_merged.push(cur_range);
+                    cur_range = null;
+                }
+            }
+        }
+
+        // Fetch the data
+        const promises = byte_ranges_merged.map(entr => {
+            const range_header = `${entr[0]}-${entr[1] === null ? '' : entr[1] - 1}`;
+            return fetch(url, {headers: {range: `bytes=${range_header}`}});
+        })
+
+        // Unpack and stick it all in a single array buffer
+        return Promise.all(promises).then(resps => {
+            const promises = resps.map(async resp => await resp.arrayBuffer());
+            return Promise.all(promises);
+        }).then(buffers => {
+            let concat_buf: ArrayBuffer;
+            if (buffers.length > 1) {
+                const total_length = buffers.map(buf => buf.byteLength).reduce((a, b) => a + b);
+                const concat = new Uint8Array(total_length);
+                let offset = 0;
+                buffers.forEach(buf => {
+                    console.log(offset, concat.byteLength);
+                    concat.set(new Uint8Array(buf), offset);
+                    offset += buf.byteLength;
+                });
+
+                concat_buf = concat.buffer;
+            }
+            else {
+                concat_buf = buffers[0];
+            }
+
+            const dv = new DataView(concat_buf);
+            return Grib2File.scan(dv);
+        });
+    }
+
+    static parse(inv_string: string) {
+        const inv_strings = inv_string.split("\n")
+        const inv_byte_offsets = inv_strings.map(Grib2InventoryEntry.parseByteOffset);
+
+        const inv_entries: Grib2InventoryEntry[] = [];
+        for (let i = 0; i < inv_strings.length; i++) {
+            const byte_lower = inv_byte_offsets[i];
+            const byte_upper = i < inv_string.length - 1 ? inv_byte_offsets[i + 1] : null;
+
+            inv_entries.push(new Grib2InventoryEntry([byte_lower, byte_upper], inv_strings[i]));
+        }
+
+        return new Grib2Inventory(inv_entries);
+    }
+
+    static async fromRemote(url: string) {
+        const file = await fetch(url);
+        return Grib2Inventory.parse(await file.text());
+    }
+
+    list() {
+        console.log(this.entries.map(entr => entr.inv_string).join("\n"));
+    }
+}
+
 class Grib2MessageHeaders {
     readonly offset: number;
 
@@ -165,4 +278,4 @@ class Grib2Message {
     }
 }
 
-export {Grib2Message, Grib2MessageHeaders, Grib2File, addGrib2ParameterListing};
+export {Grib2Message, Grib2MessageHeaders, Grib2File, Grib2Inventory, addGrib2ParameterListing};
