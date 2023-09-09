@@ -137,9 +137,6 @@ int unpk_complex(unsigned int npnts, unsigned char nbits, unsigned int ngroups,
             {
             unsigned int i;
                 for (i = 0; i < ngroups; i++) {
-                    /* eliminate potential overflow here */
-                    // n_bytes += (group_lengths[i]*group_widths[i]) / 8;
-                    // n_bits += (group_lengths[i]*group_widths[i]) % 8;
                     n_bytes += (group_lengths[i] / 8) * (group_widths[i]);
                     n_bits += (group_lengths[i] % 8) * (group_widths[i]);
                     n_bytes += n_bits / 8;
@@ -175,7 +172,7 @@ int unpk_complex(unsigned int npnts, unsigned char nbits, unsigned int ngroups,
     n_bytes += (n_bits+7)/8;
 
     if (data_ptr + n_bytes - data_in != sec7_size) {
-        printf("complex unpacking size mismatch old test (expected %ld + %d - %ld = %ld to be %d)\n", (long)data_ptr, n_bytes, (long)data_in, data_ptr + n_bytes - data_in, sec7_size);
+        printf("complex unpacking size mismatch old test\n");
         return -3;
     }
 
@@ -253,8 +250,6 @@ int unpk_complex(unsigned int npnts, unsigned char nbits, unsigned int ngroups,
             }
         }
     }
-
-	// convert to float
 
 	free(group_refs);
 	free(group_widths);
