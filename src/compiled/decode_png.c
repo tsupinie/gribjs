@@ -25,44 +25,7 @@
 #include <string.h>
 #include <png.h>
 
-static unsigned char *bitstream;
-static int rbits, reg, n_bitstream;
-
-int add_bitstream(int t, int n_bits) {
-    unsigned int jmask;
-
-    if (n_bits > 16) {
-        add_bitstream(t >> 16, n_bits - 16);
-        n_bits = 16; 
-    }   
-    if (n_bits > 25) {
-        fprintf(stderr, "add_bitstream: n_bits = (%d)", n_bits);
-        return -1;
-    }
-    jmask = (1 << n_bits) - 1;
-    rbits += n_bits;
-    reg = (reg << n_bits) | (t & jmask);
-    while (rbits >= 8) {
-    *bitstream++ = (reg >> (rbits = rbits-8)) & 255;
-    n_bitstream++;
-    }   
-    return 0;
-}
-
-void init_bitstream(unsigned char *new_bitstream) {
-    bitstream = new_bitstream;
-    n_bitstream = reg = rbits = 0;
-    return;
-}
-
-void finish_bitstream(void) {
-    if (rbits) {
-        n_bitstream++;
-        *bitstream++ = (reg << (8-rbits)) & 255;
-        rbits = 0;
-    }
-    return;
-}
+#include "bitstream.h"
 
 struct png_stream {
    unsigned char *stream_ptr;     /*  location to write PNG stream  */

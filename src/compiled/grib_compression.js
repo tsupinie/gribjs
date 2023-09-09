@@ -27,7 +27,7 @@ Module['ready'] = new Promise((resolve, reject) => {
   readyPromiseResolve = resolve;
   readyPromiseReject = reject;
 });
-["_decode_png","_malloc","_free","_memory","___indirect_function_table","_fflush","onRuntimeInitialized"].forEach((prop) => {
+["_decode_png","_unpk_complex","_unpk_sd_complex","_malloc","_free","_memory","___indirect_function_table","_fflush","onRuntimeInitialized"].forEach((prop) => {
   if (!Object.getOwnPropertyDescriptor(Module['ready'], prop)) {
     Object.defineProperty(Module['ready'], prop, {
       get: () => abort('You are getting ' + prop + ' on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js'),
@@ -1412,6 +1412,8 @@ var wasmImports = {
   invoke_iiii: invoke_iiii,
   invoke_iiiii: invoke_iiiii,
   invoke_iiiiiiiiii: invoke_iiiiiiiiii,
+  invoke_v: invoke_v,
+  invoke_vi: invoke_vi,
   invoke_vii: invoke_vii,
   invoke_viii: invoke_viii,
   invoke_viiii: invoke_viiii
@@ -1422,6 +1424,8 @@ var _decode_png = Module['_decode_png'] = createExportWrapper('decode_png');
 var _malloc = Module['_malloc'] = createExportWrapper('malloc');
 var setTempRet0 = createExportWrapper('setTempRet0');
 var _free = Module['_free'] = createExportWrapper('free');
+var _unpk_complex = Module['_unpk_complex'] = createExportWrapper('unpk_complex');
+var _unpk_sd_complex = Module['_unpk_sd_complex'] = createExportWrapper('unpk_sd_complex');
 var ___errno_location = createExportWrapper('__errno_location');
 var _fflush = Module['_fflush'] = createExportWrapper('fflush');
 var _setThrew = createExportWrapper('setThrew');
@@ -1505,6 +1509,28 @@ function invoke_iiiiiiiiii(index,a1,a2,a3,a4,a5,a6,a7,a8,a9) {
   var sp = stackSave();
   try {
     return getWasmTableEntry(index)(a1,a2,a3,a4,a5,a6,a7,a8,a9);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_vi(index,a1) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)(a1);
+  } catch(e) {
+    stackRestore(sp);
+    if (e !== e+0) throw e;
+    _setThrew(1, 0);
+  }
+}
+
+function invoke_v(index) {
+  var sp = stackSave();
+  try {
+    getWasmTableEntry(index)();
   } catch(e) {
     stackRestore(sp);
     if (e !== e+0) throw e;

@@ -1,6 +1,6 @@
 
 import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base"
-import { pngDecoder } from "./unpack";
+import { complexSDPackingDecoder, pngDecoder } from "./unpack";
 
 interface DataRepresentationDefinition {
     unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number): Promise<Float32Array>;
@@ -115,7 +115,25 @@ class Grib2ComplexPackingDifferencing extends Grib2Struct<Grib2ComplexPackingDif
     }
 
     async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) : Promise<Float32Array> {
-        throw "Complex (un)packing with spatial differencing not implemented yet";
+        const data = new Uint8Array(buffer.buffer.slice(offset, offset + packed_length))
+        const output = await complexSDPackingDecoder(data, 
+            expected_size,
+            this.contents.number_of_bits,
+            this.contents.number_of_groups,
+            this.contents.group_splitting_method,
+            this.contents.missing_value_method,
+            this.contents.group_width_reference,
+            this.contents.group_width_bits,
+            this.contents.group_length_reference,
+            this.contents.group_length_increment,
+            this.contents.last_group_length,
+            this.contents.group_length_bits,
+            packed_length,
+            this.contents.spatial_difference_order,
+            this.contents.descriptor_bytes
+        );
+        
+        return unpackScaling(output, this.contents.reference_value, this.contents.binary_scale_factor, this.contents.decimal_scale_factor, this.contents.original_data_type);
     }
 }
 

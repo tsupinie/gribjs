@@ -65,4 +65,108 @@ async function pngDecoder(compressed: Uint8Array, bit_depth: 8 | 16 | 32, expect
     return decompressed;
 }
 
-export {pngDecoder};
+async function complexPackingDecoder(compressed: Uint8Array, expected_size: number, nbits: number, n_groups: number,
+    group_split_method: number, missing_val_method: number, ref_group_width: number, nbit_group_width: number,
+    ref_group_length: number, group_length_factor: number, len_last: number,
+    nbits_group_len: number, packed_size: number) {
+
+    if (compression === null) {
+        compression = await compression_module();
+    }
+
+    const csd_decoder = compression.cwrap('unpk_complex', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number', 
+        'number', 'number', 'number', 'number', 'number', 'number', 'number']);
+    const bit_depth = 32;
+
+    const compressed_ = compression._malloc(compressed.length);
+    const decompressed_ = compression._malloc(expected_size * bit_depth / 8);
+
+    compressed.forEach((v, i) => compression.setValue(compressed_ + i, v, 'i8'));
+
+    const decode_status = csd_decoder(
+        expected_size,
+        nbits,
+        n_groups,
+        group_split_method,
+        missing_val_method,
+        ref_group_width,
+        nbit_group_width,
+        ref_group_length,
+        group_length_factor,
+        len_last,
+        nbits_group_len,
+        packed_size, compressed_, decompressed_);
+
+    let decompressed;
+
+    if (decode_status == 0) {
+        decompressed = new Uint32Array(expected_size);
+
+        for (let i = 0; i < expected_size; i++) {
+            decompressed[i] = compression.getValue(decompressed_ + i * bit_depth / 8, `i${bit_depth}`);
+        }
+    }
+
+    compression._free(compressed_);
+    compression._free(decompressed_);
+
+    if (decode_status != 0) {
+        throw `Complex packing decoder encountered an error: ${decode_status}`;
+    }
+
+    return decompressed;
+}
+
+async function complexSDPackingDecoder(compressed: Uint8Array, expected_size: number, nbits: number, n_groups: number,
+    group_split_method: number, missing_val_method: number, ref_group_width: number, nbit_group_width: number,
+    ref_group_length: number, group_length_factor: number, len_last: number,
+    nbits_group_len: number, packed_size: number, sd_order: number, extra_octets: number) {
+
+    if (compression === null) {
+        compression = await compression_module();
+    }
+
+    const csd_decoder = compression.cwrap('unpk_sd_complex', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number', 
+        'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
+    const bit_depth = 32;
+
+    const compressed_ = compression._malloc(compressed.length);
+    const decompressed_ = compression._malloc(expected_size * bit_depth / 8);
+
+    compressed.forEach((v, i) => compression.setValue(compressed_ + i, v, 'i8'));
+
+    const decode_status = csd_decoder(
+        expected_size,
+        nbits,
+        n_groups,
+        group_split_method,
+        missing_val_method,
+        ref_group_width,
+        nbit_group_width,
+        ref_group_length,
+        group_length_factor,
+        len_last,
+        nbits_group_len,
+        packed_size, sd_order, extra_octets, compressed_, decompressed_);
+
+    let decompressed;
+
+    if (decode_status == 0) {
+        decompressed = new Uint32Array(expected_size);
+
+        for (let i = 0; i < expected_size; i++) {
+            decompressed[i] = compression.getValue(decompressed_ + i * bit_depth / 8, `i${bit_depth}`);
+        }
+    }
+
+    compression._free(compressed_);
+    compression._free(decompressed_);
+
+    if (decode_status != 0) {
+        throw `Complex/spatial differencing packing decoder encountered an error: ${decode_status}`;
+    }
+
+    return decompressed;
+}
+
+export {pngDecoder, complexPackingDecoder, complexSDPackingDecoder};
