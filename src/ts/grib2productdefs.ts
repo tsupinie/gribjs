@@ -15,7 +15,17 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
 
     const value = Math.pow(10, surface_scale_factor) * surface_value;
     const coordinate = lookupGrib2Surface(surface_type);
-    const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', value.toString()).replace('{surfaceUnits}', coordinate.surfaceUnits);
+
+    let print_units = coordinate.surfaceUnits;
+    let print_value = value;
+
+    // Convert isobaric surfaces to mb for printing
+    if (print_units == 'Pa') {
+        print_units = 'mb';
+        print_value /= 100;
+    }
+
+    const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', print_value.toString()).replace('{surfaceUnits}', print_units);
 
     return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits, printable: printable};
 }
