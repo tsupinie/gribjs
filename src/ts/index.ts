@@ -6,6 +6,10 @@ import {Grib2BitmapSection, Grib2DataRepresentationSection, Grib2DataSection, Gr
 import { addGrib2ParameterListing } from './grib2producttables';
 import { DurationObjectUnits } from 'luxon';
 
+/**
+ * Grib2 files contain one or more grib2 messages in sequence, and each message is independent of all the others. This class keeps the headers
+ * for all messages in memory and doesn't unpack the actual data until getMessage() is called.
+ */
 class Grib2File {
     readonly headers: Grib2MessageHeaders[];
     readonly buffer: DataView;
@@ -15,11 +19,21 @@ class Grib2File {
         this.buffer = buffer;
     }
 
+    /**
+     * Get a grib2 message from the file by index.
+     * @param index - The index of the message
+     * @returns The message at the index `index`
+     */
     async getMessage(index: number) {
         const header = this.headers[index];
         return await header.getMessage(this.buffer);
     }
 
+    /**
+     * Scan a data buffer for grib2 messages
+     * @param buffer - The buffer to scan
+     * @returns A Grib2File with all the messages
+     */
     static scan(buffer: DataView) {
         let offset = 0;
         const message_headers: Grib2MessageHeaders[] = [];
@@ -33,10 +47,21 @@ class Grib2File {
         return new Grib2File(message_headers, buffer);
     }
 
+    /**
+     * @returns A string containing the header information for each message in this file
+     */
     toString() {
         return this.headers.map((header, ihdr) => header.getInventoryString(ihdr));
     }
 
+    /**
+     * Search for messages that match a particular string or regular expression
+     * @param matcher - A string or regular expression to search for. This is checked against the string output by the list command, so anything in that string can be matched.
+     * @returns A Grib2File containing the messages matching the search string or regular expression
+     * @example
+     * // Search for 500 mb height
+     * g2_file.search(':HGT:500 mb:')
+     */
     search(matcher: string | RegExp) {
         const matching_headers = this.headers.filter((hdr, ihdr) => hdr.matches(ihdr, matcher));
         return new Grib2File(matching_headers, this.buffer);
@@ -61,6 +86,9 @@ class Grib2InventoryEntry {
     }
 }
 
+/**
+ * An inventory is a listing of the messages in the file.
+ */
 class Grib2Inventory {
     readonly entries: Grib2InventoryEntry[];
 
@@ -68,10 +96,33 @@ class Grib2Inventory {
         this.entries = entries;
     }
 
+    /**
+     * Search for messages in the inventory that match a particular string or regular expresssion
+     * @param matcher - A string or regular expression to search for. This is checked against the string in the inventory.
+     * @returns A Grib2Inventory containing the subset
+     * @example
+     * // Search for all the 500 mb fields in this dataset
+     * let inv_500mb = g2_inv.search(':500 mb:');
+     * // inv_500mb contains 500 mb heights, winds, temperatures, etc. Now, just pull out height:
+     * let z500_inv = inv_500mb.search(':HGT:');
+     * // z500_inv now contains 500 mb height. Do both of the above in one step:
+     * inv_500mb = g2_inv.search(':HGT:500 mb:');
+     */
     search(matcher: string | RegExp) {
         return new Grib2Inventory(this.entries.filter(entr => entr.matches(matcher)));
     }
 
+    /**
+     * Download a grib2 file containing the messages in this inventory. This function only downloads the sections of the full file that are referred to in this inventory object.
+     * @param url - The url to download data from
+     * @returns A Grib2File containing all the messages
+     * @example
+     * // Subset the full inventory (500 mb height)
+     * const z500_inv = g2_inv.search(':HGT:500 mb:');
+     * 
+     * // Download only the 500 mb height message from the remote grib file
+     * z500_inv.downloadData('https://example.com/path/to/data.grib2');
+     */
     async downloadData(url: string) {
         const byte_ranges = this.entries.map(entr => entr.byte_range);
         const byte_ranges_merged: [number, number][] = [];
@@ -130,6 +181,12 @@ class Grib2Inventory {
         });
     }
 
+    /**
+     * Parse a grib2 inventory from a string. The inventory contains one message per line and has the message index, start byte, reference time, vertical level, and ensemble
+     * information separated by colons.
+     * @param inv_string - The string to parse
+     * @returns A Grib2Inventory
+     */
     static parse(inv_string: string) {
         const inv_strings = inv_string.split("\n")
         const inv_byte_offsets = inv_strings.map(Grib2InventoryEntry.parseByteOffset);
@@ -145,11 +202,19 @@ class Grib2Inventory {
         return new Grib2Inventory(inv_entries);
     }
 
+    /**
+     * Fetch and parse an inventory from a remote data source.
+     * @param url - The url to fetch the inventory from
+     * @returns A Grib2Inventory
+     */
     static async fromRemote(url: string) {
         const file = await fetch(url);
         return Grib2Inventory.parse(await file.text());
     }
 
+    /**
+     * @returns A string containing the header information for each message in the inventory
+     */
     toString() {
         return this.entries.map(entr => entr.inv_string).join("\n");
     }
@@ -270,6 +335,10 @@ class Grib2Message {
         this.data = data;
     }
 
+    /**
+     * Get the reference time for the message. This is usually the forecast initialization time or analysis valid time, but depends on how the file was encoded.
+     * @returns reference time as a luxon DateTime object
+     */
     getReferenceTime() {
         return this.headers.getReferenceTime();
     }
