@@ -30,6 +30,12 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
     return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits, printable: printable};
 }
 
+interface EnsembleSpec {
+    member_type: string;
+    perturbation_number: number;
+    ensemble_size: number;
+}
+
 const time_range_unit_iso: Record<number, string> = {
     0: 'PT1M',
     1: 'PT1H',
@@ -107,6 +113,26 @@ function isAnalysisOrForecastProduct(obj: any) : obj is InstanceType<typeof Anal
 }
 
 /**
+ * Ensemble mixin
+ */
+type ConstructorWithEnsemble = Constructor<Grib2Struct<{ensemble_type: number, ensemble_perturbation_number: number, ensemble_size: number}>>;
+function ensembleProduct<T extends ConstructorWithEnsemble>(base: T) {
+    return class extends base {
+        getEnsemble() : EnsembleSpec {
+            const ensemble_types: Record<number, string> = {0: 'Hi-Res Control', 1: 'Lo-Res Control', 2: 'Negative Perturbation', 3: 'Positive Perturbation', 4: 'Multi Model', 192: 'Perturbed'};
+
+            const ensemble_type = ensemble_types[this.contents.ensemble_type];
+            return {member_type: ensemble_type, perturbation_number: this.contents.ensemble_perturbation_number, ensemble_size: this.contents.ensemble_size};
+        }
+    }
+}
+
+const EnsembleProduct = ensembleProduct(ProductDefinitionBase);
+function isEnsembleProduct(obj: any) : obj is InstanceType<typeof EnsembleProduct> {
+    return 'ensemble_type' in obj && 'ensemble_perturbation_number' in obj && 'ensemble_size' in obj;
+}
+
+/**
  * Template definitions
  */
 const g2_forecast_at_time_types = {
@@ -152,7 +178,9 @@ const g2_ens_forecast_at_time_types = {
     ensemble_size: G2UInt1,
 }
 
-class Grib2EnsForecastAtTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_at_time_types>>)) {}
+class Grib2EnsForecastAtTime extends ensembleProduct(
+                                     analysisOrForecastProduct(
+                                     horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_at_time_types>>))) {}
 const g2_ens_forecast_at_time_unpacker = unpackerFactory(g2_ens_forecast_at_time_types, Grib2EnsForecastAtTime);
 
 
@@ -251,7 +279,9 @@ const g2_ens_forecast_agg_over_time_types = {
     agg_sample_interval_length: G2UInt4,
 }
 
-class Grib2EnsForecastAggOverTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_agg_over_time_types>>)) {}
+class Grib2EnsForecastAggOverTime extends ensembleProduct(
+                                          analysisOrForecastProduct(
+                                          horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_agg_over_time_types>>))) {}
 const g2_ens_forecast_agg_over_time_unpacker = unpackerFactory(g2_ens_forecast_agg_over_time_types, Grib2EnsForecastAggOverTime);
 
 const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefinition>('product definition template', {
@@ -262,5 +292,5 @@ const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefin
     11: g2_ens_forecast_agg_over_time_unpacker,
 });
 
-export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct};
-export type {ProductDefinition, SurfaceSpec};
+export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct, isEnsembleProduct};
+export type {ProductDefinition, SurfaceSpec, EnsembleSpec};

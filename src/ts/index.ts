@@ -51,7 +51,7 @@ class Grib2File {
      * @returns A string containing the header information for each message in this file
      */
     toString() {
-        return this.headers.map((header, ihdr) => header.getInventoryString(ihdr));
+        return this.headers.map((header, ihdr) => header.getInventoryString(ihdr)).join("\n");
     }
 
     /**
@@ -303,12 +303,21 @@ class Grib2MessageHeaders {
             surfaces_str += `-${surfaces.surface1.printable}`;
         }
 
+        const ref_time_str = this.getReferenceTime().toFormat('yyyyMMddHH');
         const fcst_time = this.sec4.getForecastTime();
         const fcst_time_obj = fcst_time.toObject();
         const fcst_time_unit = Object.keys(fcst_time_obj)[0] as keyof DurationObjectUnits;
         const fcst_time_str = fcst_time.toMillis() == 0 ? 'anl' : `${fcst_time_obj[fcst_time_unit]} ${fcst_time_unit.slice(0, -1)} fcst`;
 
-        return `${index + 1}:${offset}:${product}:${surfaces_str}:${fcst_time_str}:`;
+        const ensemble = this.sec4.getEnsemble();
+
+        let ens_str = "";
+        if (ensemble !== null) {
+            const type_str = ensemble.member_type == "Negative Perturbation" ? '-' : ensemble.member_type == "Positive Perturbation" ? '+' : '';
+            ens_str = `ENS=${type_str}${ensemble.perturbation_number}`;
+        }
+
+        return `${index + 1}:${offset}:d=${ref_time_str}:${product}:${surfaces_str}:${fcst_time_str}:${ens_str}`;
     }
 
     get message_length() {
