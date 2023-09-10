@@ -33,10 +33,8 @@ class Grib2File {
         return new Grib2File(message_headers, buffer);
     }
 
-    list() {
-        this.headers.forEach((header, ihdr) => {
-            console.log(header.getString(ihdr));
-        });
+    toString() {
+        return this.headers.map((header, ihdr) => header.getInventoryString(ihdr));
     }
 
     search(matcher: string | RegExp) {
@@ -152,8 +150,8 @@ class Grib2Inventory {
         return Grib2Inventory.parse(await file.text());
     }
 
-    list() {
-        console.log(this.entries.map(entr => entr.inv_string).join("\n"));
+    toString() {
+        return this.entries.map(entr => entr.inv_string).join("\n");
     }
 }
 
@@ -227,7 +225,7 @@ class Grib2MessageHeaders {
         return new Grib2Message(this.offset, this, data);
     }
 
-    getString(index: number) {
+    getInventoryString(index: number) {
         const offset = this.offset;
         const product = this.sec4.getProduct(this.sec0.contents.grib_discipline).parameterAbbrev;
 
@@ -253,7 +251,7 @@ class Grib2MessageHeaders {
     }
 
     matches(index: number, matcher: string | RegExp) {
-        return this.getString(index).match(matcher) !== null;
+        return this.getInventoryString(index).match(matcher) !== null;
     }
 
     getReferenceTime() {
