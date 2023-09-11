@@ -119,7 +119,7 @@ type ConstructorWithEnsemble = Constructor<Grib2Struct<{ensemble_type: number, e
 function ensembleProduct<T extends ConstructorWithEnsemble>(base: T) {
     return class extends base {
         getEnsemble() : EnsembleSpec {
-            const ensemble_types: Record<number, string> = {0: 'Hi-Res Control', 1: 'Lo-Res Control', 2: 'Negative Perturbation', 3: 'Positive Perturbation', 4: 'Multi Model', 192: 'Perturbed'};
+            const ensemble_types: Record<number, string> = {0: 'hi-res ctl', 1: 'low-res ctl', 2: 'negative pert', 3: 'positive pert', 4: 'multi-model', 192: 'pert'};
 
             const ensemble_type = ensemble_types[this.contents.ensemble_type];
             return {member_type: ensemble_type, perturbation_number: this.contents.ensemble_perturbation_number, ensemble_size: this.contents.ensemble_size};
@@ -129,7 +129,7 @@ function ensembleProduct<T extends ConstructorWithEnsemble>(base: T) {
 
 const EnsembleProduct = ensembleProduct(ProductDefinitionBase);
 function isEnsembleProduct(obj: any) : obj is InstanceType<typeof EnsembleProduct> {
-    return 'ensemble_type' in obj && 'ensemble_perturbation_number' in obj && 'ensemble_size' in obj;
+    return 'getEnsemble' in obj;
 }
 
 /**

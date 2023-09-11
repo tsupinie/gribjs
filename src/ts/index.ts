@@ -313,8 +313,15 @@ class Grib2MessageHeaders {
 
         let ens_str = "";
         if (ensemble !== null) {
-            const type_str = ensemble.member_type == "Negative Perturbation" ? '-' : ensemble.member_type == "Positive Perturbation" ? '+' : '';
-            ens_str = `ENS=${type_str}${ensemble.perturbation_number}`;
+            let pert_str = "";
+            if (ensemble.member_type == 'negative pert' || ensemble.member_type == 'positive pert') {
+                const type_str = {'negative pert': '-', 'positive pert': '+'}[ensemble.member_type];
+                pert_str = `${type_str}${ensemble.perturbation_number}`;
+            }
+            else {
+                pert_str = ensemble.member_type;
+            }
+            ens_str = `ENS=${pert_str}`;
         }
 
         return `${index + 1}:${offset}:d=${ref_time_str}:${product}:${surfaces_str}:${fcst_time_str}:${ens_str}`;
