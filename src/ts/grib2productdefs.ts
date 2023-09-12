@@ -1,7 +1,7 @@
 import { Constructor, G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
 import { Grib2SurfaceTableEntry, lookupGrib2Surface } from "./grib2surfacetables";
 
-import {Duration} from 'luxon';
+import {DateTime, Duration} from 'luxon';
 
 interface SurfaceSpec extends Omit<Grib2SurfaceTableEntry, 'surfacePrintFormat'> {
     value: number;
@@ -36,6 +36,11 @@ interface EnsembleSpec {
     ensemble_size: number;
 }
 
+interface TimeAggSpec {
+    agg_type: string;
+    agg_dur: Duration;
+}
+
 const time_range_unit_iso: Record<number, string> = {
     0: 'PT1M',
     1: 'PT1H',
@@ -49,6 +54,24 @@ const time_range_unit_iso: Record<number, string> = {
     11: 'PT6H',
     12: 'PT12H',
     13: 'PT1S',
+}
+
+const statistical_processing: Record<number, string> = {
+    0: 'ave',
+    1: 'acc',
+    2: 'max',
+    3: 'min',
+    4: 'last-first',
+    5: 'RMS',
+    6: 'StdDev',
+    7: 'covar',
+    8: 'first-last',
+    9: 'ratio',
+    10: 'standardized anomaly',
+    11: 'summation',
+    12: 'return period',
+    100: 'severity',
+    101: 'mode',
 }
 
 /**
@@ -99,7 +122,7 @@ function analysisOrForecastProduct<T extends ConstructorWithForecastTime>(base: 
     return class extends base {
         getForecastTime() {
             if (!(this.contents.time_range_unit in time_range_unit_iso)) {
-                throw `Time range unit ${this.contents.time_range_unit} is unknown`
+                throw `Time range unit ${this.contents.time_range_unit} is unknown`;
             }
     
             return Duration.fromISO(time_range_unit_iso[this.contents.time_range_unit]).mapUnits(u => u * this.contents.forecast_time);
@@ -110,6 +133,53 @@ function analysisOrForecastProduct<T extends ConstructorWithForecastTime>(base: 
 const AnalysisOrForecastProduct = analysisOrForecastProduct(ProductDefinitionBase);
 function isAnalysisOrForecastProduct(obj: any) : obj is InstanceType<typeof AnalysisOrForecastProduct> {
     return 'getForecastTime' in obj;
+}
+
+/**
+ * Time aggregation mixin
+ */
+type ConstructorWithTimeAgg = Constructor<Grib2Struct<{interval_end_year: number, interval_end_month: number, interval_end_day: number,
+                                                       interval_end_hour: number, interval_end_minute: number, interval_end_second: number,
+                                                       number_of_agg_intervals: number, number_of_missing_values: number,
+                                                       agg_process_type: number, agg_sample_increment_type: number,
+                                                       agg_interval_time_range_unit: number, agg_interval_length: number,
+                                                       agg_sample_time_range_unit: number, agg_sample_interval_length: number, time_range_unit: number, forecast_time: number}>>;
+function timeAggProduct<T extends ConstructorWithTimeAgg>(base: T) {
+    return class extends base {
+        private getAggregationDuration() {
+            if (!(this.contents.agg_interval_time_range_unit in time_range_unit_iso)) {
+                throw `Aggregation interval range unit ${this.contents.agg_interval_time_range_unit} is unknown`;
+            }
+
+            return Duration.fromISO(time_range_unit_iso[this.contents.agg_interval_time_range_unit]).mapUnits(u => u * this.contents.agg_interval_length);
+        }
+
+        getTimeAgg() : TimeAggSpec {
+            if (!(this.contents.agg_process_type in statistical_processing)) {
+                throw `Aggregation type ${this.contents.agg_process_type} is unknown`;
+            }
+
+            const agg_dur = this.getAggregationDuration();
+            const agg_type = statistical_processing[this.contents.agg_process_type];
+            return {agg_type: agg_type, agg_dur: agg_dur};
+        }
+
+        getForecastTime() {
+            if (!(this.contents.time_range_unit in time_range_unit_iso)) {
+                throw `Time range unit ${this.contents.time_range_unit} is unknown`;
+            }
+
+            const intv_start_dur = Duration.fromISO(time_range_unit_iso[this.contents.time_range_unit]).mapUnits(u => u * this.contents.forecast_time);
+            const agg_dur = this.getAggregationDuration();
+    
+            return intv_start_dur.plus(agg_dur);
+        }
+    }
+}
+
+const TimeAggProduct = timeAggProduct(ProductDefinitionBase);
+function isTimeAggProduct(obj: any) : obj is InstanceType<typeof TimeAggProduct> {
+    return 'getTimeAgg' in obj;
 }
 
 /**
@@ -240,7 +310,9 @@ const g2_forecast_agg_over_time_types = {
     agg_sample_interval_length: G2UInt4,
 }
 
-class Grib2ForecastAggOverTime extends analysisOrForecastProduct(horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_agg_over_time_types>>)) {}
+class Grib2ForecastAggOverTime extends timeAggProduct(
+                                       analysisOrForecastProduct(
+                                       horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_forecast_agg_over_time_types>>))) {}
 const g2_forecast_agg_over_time_unpacker = unpackerFactory(g2_forecast_agg_over_time_types, Grib2ForecastAggOverTime);
 
 
@@ -279,9 +351,10 @@ const g2_ens_forecast_agg_over_time_types = {
     agg_sample_interval_length: G2UInt4,
 }
 
-class Grib2EnsForecastAggOverTime extends ensembleProduct(
+class Grib2EnsForecastAggOverTime extends timeAggProduct(
+                                          ensembleProduct(
                                           analysisOrForecastProduct(
-                                          horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_agg_over_time_types>>))) {}
+                                          horizontalLayerProduct(ProductDefinitionBase<InternalTypeMapper<typeof g2_ens_forecast_agg_over_time_types>>)))) {}
 const g2_ens_forecast_agg_over_time_unpacker = unpackerFactory(g2_ens_forecast_agg_over_time_types, Grib2EnsForecastAggOverTime);
 
 const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefinition>('product definition template', {
@@ -292,5 +365,5 @@ const g2_section4_template_unpackers = new Grib2TemplateEnumeration<ProductDefin
     11: g2_ens_forecast_agg_over_time_unpacker,
 });
 
-export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct, isEnsembleProduct};
-export type {ProductDefinition, SurfaceSpec, EnsembleSpec};
+export {g2_section4_template_unpackers, isHorizontalLayerProduct, isAnalysisOrForecastProduct, isTimeAggProduct, isEnsembleProduct};
+export type {ProductDefinition, SurfaceSpec, EnsembleSpec, TimeAggSpec};

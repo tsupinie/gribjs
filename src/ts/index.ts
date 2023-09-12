@@ -139,7 +139,7 @@ class Grib2Inventory {
                 }
                 else {
                     byte_ranges_merged.push(cur_range);
-                    cur_range = null;
+                    cur_range = byte_ranges[i];
                 }
             }
 
@@ -165,7 +165,6 @@ class Grib2Inventory {
                 const concat = new Uint8Array(total_length);
                 let offset = 0;
                 buffers.forEach(buf => {
-                    console.log(offset, concat.byteLength);
                     concat.set(new Uint8Array(buf), offset);
                     offset += buf.byteLength;
                 });
@@ -188,7 +187,7 @@ class Grib2Inventory {
      * @returns A Grib2Inventory
      */
     static parse(inv_string: string) {
-        const inv_strings = inv_string.split("\n")
+        const inv_strings = inv_string.replace(/^\s+|\s+$/g, '').split("\n");
         const inv_byte_offsets = inv_strings.map(Grib2InventoryEntry.parseByteOffset);
 
         const inv_entries: Grib2InventoryEntry[] = [];
@@ -304,10 +303,21 @@ class Grib2MessageHeaders {
         }
 
         const ref_time_str = this.getReferenceTime().toFormat('yyyyMMddHH');
+        const fcst_agg = this.sec4.getTimeAgg();
+
         const fcst_time = this.sec4.getForecastTime();
         const fcst_time_obj = fcst_time.toObject();
         const fcst_time_unit = Object.keys(fcst_time_obj)[0] as keyof DurationObjectUnits;
-        const fcst_time_str = fcst_time.toMillis() == 0 ? 'anl' : `${fcst_time_obj[fcst_time_unit]} ${fcst_time_unit.slice(0, -1)} fcst`;
+
+        let fcst_time_str;
+        if (fcst_agg) {
+            const fcst_intv_start = fcst_time.minus(fcst_agg.agg_dur);
+            const fcst_intv_start_obj = fcst_intv_start.shiftTo(fcst_time_unit).toObject();
+            fcst_time_str = `${fcst_intv_start_obj[fcst_time_unit]}-${fcst_time_obj[fcst_time_unit]} ${fcst_time_unit.slice(0, -1)} ${fcst_agg.agg_type} fcst`;
+        }
+        else {
+            fcst_time_str = fcst_time.toMillis() == 0 ? 'anl' : `${fcst_time_obj[fcst_time_unit]} ${fcst_time_unit.slice(0, -1)} fcst`;
+        }
 
         const ensemble = this.sec4.getEnsemble();
 

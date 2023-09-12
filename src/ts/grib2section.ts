@@ -3,7 +3,7 @@ import { DateTime, Duration } from "luxon";
 import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper, Constructor } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
 import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
-import { EnsembleSpec, ProductDefinition, SurfaceSpec, g2_section4_template_unpackers, isAnalysisOrForecastProduct, isEnsembleProduct, isHorizontalLayerProduct } from "./grib2productdefs";
+import { EnsembleSpec, ProductDefinition, SurfaceSpec, TimeAggSpec, g2_section4_template_unpackers, isAnalysisOrForecastProduct, isEnsembleProduct, isHorizontalLayerProduct, isTimeAggProduct } from "./grib2productdefs";
 import { lookupGrib2Parameter } from "./grib2producttables";
 
 type ConstructorWithSectionNumber = Constructor<Grib2Struct<{section_number: number}>>;
@@ -159,6 +159,14 @@ class Grib2ProductDefinitionSection extends sectionNumberCheck(Grib2Struct<Grib2
         }
 
         return this.contents.product_definition_template.getForecastTime();
+    }
+
+    getTimeAgg() : TimeAggSpec | null {
+        if (!isTimeAggProduct(this.contents.product_definition_template)) {
+            return null;
+        }
+
+        return this.contents.product_definition_template.getTimeAgg();
     }
 
     getEnsemble(): EnsembleSpec | null {
