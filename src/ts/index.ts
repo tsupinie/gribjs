@@ -299,7 +299,9 @@ class Grib2MessageHeaders {
             surfaces_str += surfaces.surface1.printable;
         }
         if (surfaces.surface2) {
-            surfaces_str += `-${surfaces.surface1.printable}`;
+            // TAS: This is dumb
+            const surface1_val = surfaces.surface1.surfaceUnits == 'Pa' ? surfaces.surface1.value / 100 : surfaces.surface1.value;
+            surfaces_str = `${surface1_val}-${surfaces.surface2.printable}`;
         }
 
         const ref_time_str = this.getReferenceTime().toFormat('yyyyMMddHH');

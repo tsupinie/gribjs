@@ -13,7 +13,7 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
         return null;
     }
 
-    const value = Math.pow(10, surface_scale_factor) * surface_value;
+    const value = Math.pow(10, -surface_scale_factor) * surface_value;
     const coordinate = lookupGrib2Surface(surface_type);
 
     let print_units = coordinate.surfaceUnits;
