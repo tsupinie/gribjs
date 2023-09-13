@@ -17,7 +17,7 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
     const coordinate = lookupGrib2Surface(surface_type);
 
     let print_units = coordinate.surfaceUnits;
-    let print_value = value;
+    let print_value = Math.round(value * 1e4) * 1e-4;
 
     // Convert isobaric surfaces to mb for printing
     if (print_units == 'Pa') {
