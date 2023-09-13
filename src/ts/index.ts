@@ -193,7 +193,7 @@ class Grib2Inventory {
         const inv_entries: Grib2InventoryEntry[] = [];
         for (let i = 0; i < inv_strings.length; i++) {
             const byte_lower = inv_byte_offsets[i];
-            const byte_upper = i < inv_string.length - 1 ? inv_byte_offsets[i + 1] : null;
+            const byte_upper = i < inv_strings.length - 1 ? inv_byte_offsets[i + 1] : null;
 
             inv_entries.push(new Grib2InventoryEntry([byte_lower, byte_upper], inv_strings[i]));
         }
