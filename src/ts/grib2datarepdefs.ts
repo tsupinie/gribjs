@@ -1,6 +1,6 @@
 
 import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base"
-import { complexSDPackingDecoder, pngDecoder } from "./unpack";
+import { complexSDPackingDecoder, jpegDecoder, pngDecoder } from "./unpack";
 
 interface DataRepresentationDefinition {
     unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number): Promise<Float32Array>;
@@ -180,10 +180,37 @@ class Grib2PNGPacking extends Grib2Struct<Grib2PNGPackingContents> implements Da
 
 const g2_png_packing_unpacker = unpackerFactory(g2_png_packing_types, Grib2PNGPacking);
 
+const g2_jpeg_packing_types = {
+    reference_value: G2UInt4,
+    binary_scale_factor: G2UInt2,
+    decimal_scale_factor: G2UInt2,
+    bit_depth: G2UInt1,
+    original_data_type: G2UInt1,
+    compression_type: G2UInt1,
+    target_compression_ratio: G2UInt1,
+}
+
+type Grib2JPEGPackingContents = InternalTypeMapper<typeof g2_jpeg_packing_types>;
+class Grib2JPEGPacking extends Grib2Struct<Grib2JPEGPackingContents> implements DataRepresentationDefinition {
+    constructor(contents: Grib2JPEGPackingContents, offset: number) {
+        contents.reference_value = maybeRecastReferenceValue(contents.reference_value, contents.original_data_type);
+        super(contents, offset);
+    }
+
+    async unpackData(buffer: DataView, offset: number, packed_length: number, expected_size: number) : Promise<Float32Array> {
+        const data = new Uint8Array(buffer.buffer.slice(offset, offset + packed_length));
+        const output = await jpegDecoder(data, expected_size);
+        return unpackScaling(output, this.contents.reference_value, this.contents.binary_scale_factor, this.contents.decimal_scale_factor, this.contents.original_data_type);
+    }
+};
+
+const g2_jpeg_packing_unpacker = unpackerFactory(g2_jpeg_packing_types, Grib2JPEGPacking);
+
 const g2_section5_template_unpackers = new Grib2TemplateEnumeration<DataRepresentationDefinition>('data representation template', {
     0: g2_simple_packing_unpacker,
     2: g2_complex_packing_unpacker,
     3: g2_complex_packing_differencing_unpacker,
+    40: g2_jpeg_packing_unpacker,
     41: g2_png_packing_unpacker,
 });
 

@@ -65,6 +65,42 @@ async function pngDecoder(compressed: Uint8Array, bit_depth: 8 | 16 | 32, expect
     return decompressed;
 }
 
+async function jpegDecoder(compressed: Uint8Array, expected_size: number) : Promise<Uint32Array> {
+    if (compression === null) {
+        compression = await compression_module();
+    }
+
+    const bit_depth = 32;
+
+    const jpeg_decoder = compression.cwrap('decode_jpeg2000', 'number', ['number', 'number', 'number']);
+
+    const compressed_ = compression._malloc(compressed.length);
+    const decompressed_ = compression._malloc(expected_size * bit_depth / 8);
+
+    compressed.forEach((v, i) => compression.setValue(compressed_ + i, v, 'i8'));
+
+    const jpeg_status = jpeg_decoder(compressed_, compressed.length, decompressed_);
+
+    let decompressed;
+
+    if (jpeg_status == 0) {
+        decompressed = new return_types[bit_depth](expected_size);
+
+        for (let i = 0; i < expected_size; i++) {
+            decompressed[i] = compression.getValue(decompressed_ + i * bit_depth / 8, `i${bit_depth}`);
+        }
+    }
+
+    compression._free(compressed_);
+    compression._free(decompressed_);
+
+    if (jpeg_status != 0) {
+        throw `jpeg decoder encountered an error: ${jpeg_status}`;
+    }
+
+    return decompressed;
+}
+
 async function complexPackingDecoder(compressed: Uint8Array, expected_size: number, nbits: number, n_groups: number,
     group_split_method: number, missing_val_method: number, ref_group_width: number, nbit_group_width: number,
     ref_group_length: number, group_length_factor: number, len_last: number,
@@ -169,4 +205,4 @@ async function complexSDPackingDecoder(compressed: Uint8Array, expected_size: nu
     return decompressed;
 }
 
-export {pngDecoder, complexPackingDecoder, complexSDPackingDecoder};
+export {pngDecoder, jpegDecoder, complexPackingDecoder, complexSDPackingDecoder};
