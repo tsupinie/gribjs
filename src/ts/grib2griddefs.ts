@@ -28,6 +28,34 @@ const g2_plate_carree_types = {
 class Grib2PlateCarreeGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_types>> implements GridDefinition {}
 const g2_plate_carree_grid_unpacker = unpackerFactory(g2_plate_carree_types, Grib2PlateCarreeGridDefinition);
 
+const g2_plate_carree_rot_types = {
+    earth_shape: G2UInt1,
+    spherical_earth_radius_scale_factor: G2UInt1,
+    spherical_earth_radius_value: G2UInt4,
+    oblate_earth_semimajor_axis_scale_factor: G2UInt1,
+    oblate_earth_semimajor_axis_value: G2UInt4,
+    oblate_earth_semiminor_axis_scale_factor: G2UInt1,
+    oblate_earth_semiminor_axis_value: G2UInt4,
+    ngrid_i: G2UInt4,
+    ngrid_j: G2UInt4,
+    basic_angle: G2UInt4,
+    subdivisions_to_basic_angle: G2UInt4,
+    lat_first: G2UInt4,
+    lon_first: G2UInt4,
+    resolution_component_flags: G2UInt1,
+    lat_last: G2UInt4,
+    lon_last: G2UInt4,
+    i_direction_increment: G2UInt4,
+    j_direction_increment: G2UInt4,
+    scanning_mode_flags: G2UInt4,
+    south_pole_latitude: G2UInt4,
+    south_pole_longitude: G2UInt4,
+    projection_rotation_angle: G2UInt4
+};
+
+class Grib2PlateCarreeRotatedGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_rot_types>> implements GridDefinition {}
+const g2_plate_carree_rot_grid_unpacker = unpackerFactory(g2_plate_carree_rot_types, Grib2PlateCarreeRotatedGridDefinition);
+
 const g2_lambert_conformal_types = {
     earth_shape: G2UInt1,
     spherical_earth_radius_scale_factor: G2UInt1,
@@ -58,6 +86,7 @@ const g2_lambert_conformal_grid_unpacker = unpackerFactory(g2_lambert_conformal_
 
 const section3_template_unpackers = new Grib2TemplateEnumeration<GridDefinition>('grid definition template', {
     0: g2_plate_carree_grid_unpacker,
+    1: g2_plate_carree_rot_grid_unpacker,
     30: g2_lambert_conformal_grid_unpacker,
 });
 
