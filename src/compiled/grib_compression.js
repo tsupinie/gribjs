@@ -1517,8 +1517,8 @@ var stackAlloc = createExportWrapper('stackAlloc');
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'])();
 var dynCall_iji = Module['dynCall_iji'] = createExportWrapper('dynCall_iji');
 var dynCall_jji = Module['dynCall_jji'] = createExportWrapper('dynCall_jji');
-var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 var dynCall_iiji = Module['dynCall_iiji'] = createExportWrapper('dynCall_iiji');
+var dynCall_jiji = Module['dynCall_jiji'] = createExportWrapper('dynCall_jiji');
 
 function invoke_iiii(index,a1,a2,a3) {
   var sp = stackSave();

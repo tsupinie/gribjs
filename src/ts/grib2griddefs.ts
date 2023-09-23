@@ -1,5 +1,5 @@
 
-import { G2UInt1, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
+import { G2Int4, G2UInt1, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base";
 
 interface GridDefinition {}
 
@@ -15,14 +15,14 @@ const g2_plate_carree_types = {
     ngrid_j: G2UInt4,
     basic_angle: G2UInt4,
     subdivisions_to_basic_angle: G2UInt4,
-    lat_first: G2UInt4,
+    lat_first: G2Int4,
     lon_first: G2UInt4,
     resolution_component_flags: G2UInt1,
-    lat_last: G2UInt4,
+    lat_last: G2Int4,
     lon_last: G2UInt4,
     i_direction_increment: G2UInt4,
     j_direction_increment: G2UInt4,
-    scanning_mode_flags: G2UInt4,
+    scanning_mode_flags: G2UInt1,
 };
 
 class Grib2PlateCarreeGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_types>> implements GridDefinition {}
@@ -40,17 +40,17 @@ const g2_plate_carree_rot_types = {
     ngrid_j: G2UInt4,
     basic_angle: G2UInt4,
     subdivisions_to_basic_angle: G2UInt4,
-    lat_first: G2UInt4,
+    lat_first: G2Int4,
     lon_first: G2UInt4,
     resolution_component_flags: G2UInt1,
-    lat_last: G2UInt4,
+    lat_last: G2Int4,
     lon_last: G2UInt4,
     i_direction_increment: G2UInt4,
     j_direction_increment: G2UInt4,
-    scanning_mode_flags: G2UInt4,
-    south_pole_latitude: G2UInt4,
-    south_pole_longitude: G2UInt4,
-    projection_rotation_angle: G2UInt4
+    scanning_mode_flags: G2UInt1,
+    south_pole_latitude: G2Int4,
+    south_pole_longitude: G2Int4,
+    projection_rotation_angle: G2Int4
 };
 
 class Grib2PlateCarreeRotatedGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_plate_carree_rot_types>> implements GridDefinition {}
@@ -66,19 +66,19 @@ const g2_lambert_conformal_types = {
     oblate_earth_semiminor_axis_value: G2UInt4,
     ngrid_i: G2UInt4,
     ngrid_j: G2UInt4,
-    lat_first: G2UInt4,
-    lon_first: G2UInt4,
+    lat_first: G2Int4,
+    lon_first: G2Int4,
     resolution_component_flags: G2UInt1,
-    center_latitude: G2UInt4,
-    standard_longitude: G2UInt4,
-    grid_dx: G2UInt4,
-    grid_dy: G2UInt4,
+    center_latitude: G2Int4,
+    standard_longitude: G2Int4,
+    grid_dx: G2Int4,
+    grid_dy: G2Int4,
     projection_center_flag: G2UInt1,
     scanning_mode_flag: G2UInt1,
-    standard_latitude_1: G2UInt4,
-    standard_latitude_2: G2UInt4,
-    south_pole_latitude: G2UInt4,
-    south_pole_longitude: G2UInt4
+    standard_latitude_1: G2Int4,
+    standard_latitude_2: G2Int4,
+    south_pole_latitude: G2Int4,
+    south_pole_longitude: G2Int4
 }
 
 class Grib2LambertConformalGridDefinition extends Grib2Struct<InternalTypeMapper<typeof g2_lambert_conformal_types>> implements GridDefinition {}
