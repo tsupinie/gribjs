@@ -34,6 +34,9 @@ const g2_file = grib.Grib2File.scan(new DataView(data));
 const msg_z500 = await inv.search(':HGT:500 mb').getMessage(0);
 ```
 
+### CORS
+A lot of sites that serve grib files haven't added headers that remove the CORS restrictions when requesting data in a browser. I guess this is probably because they're not added by default, and it's not common to request grib2 data directly to a browser. Hopefully, sites will add those headers at some point, but in the meantime, you'll probably need to set up a proxy and download grib files through that proxy.
+
 ## Dev Installation
 Development installation is a slightly laborious process that I might get around to automating at some point.
 
