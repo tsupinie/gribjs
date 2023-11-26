@@ -1,5 +1,5 @@
 
-import { G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base"
+import { G2Int2, G2UInt1, G2UInt2, G2UInt4, Grib2Struct, Grib2TemplateEnumeration, InternalTypeMapper, unpackerFactory } from "./grib2base"
 import { complexSDPackingDecoder, jpegDecoder, pngDecoder } from "./unpack";
 
 interface DataRepresentationDefinition {
@@ -31,8 +31,8 @@ function maybeRecastReferenceValue(raw_reference_value: number, data_type: numbe
 
 const g2_simple_packing_types = {
     reference_value: G2UInt4,
-    binary_scale_factor: G2UInt2,
-    decimal_scale_factor: G2UInt2,
+    binary_scale_factor: G2Int2,
+    decimal_scale_factor: G2Int2,
     number_of_bits: G2UInt1,
     original_data_type: G2UInt1,
 }
@@ -54,8 +54,8 @@ const g2_simple_packing_unpacker = unpackerFactory(g2_simple_packing_types, Grib
 
 const g2_complex_packing_types = {
     reference_value: G2UInt4,
-    binary_scale_factor: G2UInt2,
-    decimal_scale_factor: G2UInt2,
+    binary_scale_factor: G2Int2,
+    decimal_scale_factor: G2Int2,
     number_of_bits: G2UInt1,
     original_data_type: G2UInt1,
     group_splitting_method: G2UInt1,
@@ -88,8 +88,8 @@ const g2_complex_packing_unpacker = unpackerFactory(g2_complex_packing_types, Gr
 
 const g2_complex_packing_differencing_types = {
     reference_value: G2UInt4,
-    binary_scale_factor: G2UInt2,
-    decimal_scale_factor: G2UInt2,
+    binary_scale_factor: G2Int2,
+    decimal_scale_factor: G2Int2,
     number_of_bits: G2UInt1,
     original_data_type: G2UInt1,
     group_splitting_method: G2UInt1,
@@ -142,8 +142,8 @@ const g2_complex_packing_differencing_unpacker = unpackerFactory(g2_complex_pack
 
 const g2_png_packing_types = {
     reference_value: G2UInt4,
-    binary_scale_factor: G2UInt2,
-    decimal_scale_factor: G2UInt2,
+    binary_scale_factor: G2Int2,
+    decimal_scale_factor: G2Int2,
     bit_depth: G2UInt1,
     original_data_type: G2UInt1,
 }
@@ -182,8 +182,8 @@ const g2_png_packing_unpacker = unpackerFactory(g2_png_packing_types, Grib2PNGPa
 
 const g2_jpeg_packing_types = {
     reference_value: G2UInt4,
-    binary_scale_factor: G2UInt2,
-    decimal_scale_factor: G2UInt2,
+    binary_scale_factor: G2Int2,
+    decimal_scale_factor: G2Int2,
     bit_depth: G2UInt1,
     original_data_type: G2UInt1,
     compression_type: G2UInt1,
