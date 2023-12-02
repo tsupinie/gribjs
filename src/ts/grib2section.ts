@@ -2,7 +2,7 @@
 import { DateTime, Duration } from "luxon";
 import { Grib2Struct, unpackStruct, unpackUTF8String, unpackerFactory, G2UInt1, G2UInt2, G2UInt4, G2UInt8, InternalTypeMapper, Constructor } from "./grib2base";
 import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./grib2datarepdefs";
-import { GridDefinition, section3_template_unpackers } from "./grib2griddefs";
+import { GridDefinition, ScanModeFlags, hasNiNj, hasScanModeFlags, section3_template_unpackers } from "./grib2griddefs";
 import { EnsembleSpec, ProductDefinition, SurfaceSpec, TimeAggSpec, g2_section4_template_unpackers, isAnalysisOrForecastProduct, isEnsembleProduct, isHorizontalLayerProduct, isTimeAggProduct } from "./grib2productdefs";
 import { lookupGrib2Parameter } from "./grib2producttables";
 
@@ -119,6 +119,40 @@ class Grib2GridDefinitionSection extends sectionNumberCheck(Grib2Struct<Grib2Sec
         super(contents, offset);
         this.checkSectionNumber();
     }
+
+    getGridDims() {
+        if (hasNiNj(this.contents.grid_definition_template)) {
+            return {ngrid_i: this.contents.grid_definition_template.ngrid_i, ngrid_j: this.contents.grid_definition_template.ngrid_j};
+        }
+
+        throw `Grid definition template doesn't appear to have the grid dimensions implemented`;
+    }
+
+    applyScanModeFlags(data: Float32Array) {
+        if (!hasScanModeFlags(this.contents.grid_definition_template)) {
+            return;
+        }
+
+        const {ngrid_i, ngrid_j} = this.getGridDims();
+
+        const scan_mode_flags = this.contents.grid_definition_template.getScanModeFlags();
+        if (scan_mode_flags.do_adjacent_rows_alternate) {
+            // Undo the adjacent rows alternating direction
+
+            const row_halfway = Math.floor(ngrid_i / 2);
+
+            for (let j = 1; j < ngrid_j; j += 2) {
+                const row_start = j * ngrid_i;
+                const row_end = (j + 1) * ngrid_i - 1;
+
+                for (let i = 0; i < row_halfway; i++) {
+                    const tmp = data[row_start + i];
+                    data[row_start + i] = data[row_end - i];
+                    data[row_end - i] = tmp;
+                }
+            }
+        }
+    }
 }
 const g2_section3_unpacker = unpackerFactory(g2_section3_types, Grib2GridDefinitionSection);
 
@@ -198,7 +232,12 @@ class Grib2DataRepresentationSection extends sectionNumberCheck(Grib2Struct<Grib
     }
 
     get unpackData() {
-        return (buffer: DataView, offset: number, packed_len: number) => this.contents.data_representation_template.unpackData(buffer, offset, packed_len, this.contents.number_of_data_points);
+        return (buffer: DataView, offset: number, packed_len: number, sec3: Grib2GridDefinitionSection) => {
+            return this.contents.data_representation_template.unpackData(buffer, offset, packed_len, this.contents.number_of_data_points).then(data => {
+                sec3.applyScanModeFlags(data);
+                return data;
+            });
+        }
     }
 }
 
@@ -238,8 +277,8 @@ class Grib2DataSection extends sectionNumberCheck(Grib2Struct<Grib2Section7Conte
         this.checkSectionNumber();
     }
 
-    unpackData(buffer: DataView, offset: number, sec5: Grib2DataRepresentationSection) {
-        return sec5.unpackData(buffer, offset, this.contents.section_length - 5);
+    unpackData(buffer: DataView, offset: number, sec3: Grib2GridDefinitionSection, sec5: Grib2DataRepresentationSection) {
+        return sec5.unpackData(buffer, offset, this.contents.section_length - 5, sec3);
     }
 }
 

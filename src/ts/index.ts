@@ -285,7 +285,7 @@ class Grib2MessageHeaders {
     }
 
     async getMessage(buffer: DataView) {
-        const data = await this.sec7.unpackData(buffer, this.sec7.offset + 5, this.sec5);
+        const data = await this.sec7.unpackData(buffer, this.sec7.offset + 5, this.sec3, this.sec5);
         return new Grib2Message(this.offset, this, data);
     }
 
