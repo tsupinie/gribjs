@@ -48,6 +48,23 @@ class Grib2File {
     }
 
     /**
+     * Get a grib file directly from a remote source. This downloads the entire file, so if you don't need the entire file, and the file has an inventory, you may want to
+     *  use a `Grib2Inventory` to search pare down the file first.
+     * @param url - The URL from which to fetch the grib file
+     * @param opts - Options for downloading the data (use the `decompressor` option to decompress the raw data before constructing the `Grib2File` object)
+     * @returns a Grib2File containing the remote data
+     */
+    static async fromRemote(url: string, opts?: {decompressor?: (ary: Uint8Array) => Uint8Array}) {
+        opts = opts === undefined ? {} : opts;
+        const decompressor = opts.decompressor === undefined ? (ary: Uint8Array) => ary : opts.decompressor;
+
+        const resp = await fetch(url);
+        const data = new Uint8Array(await (await resp.blob()).arrayBuffer());
+        const data_decompressed = decompressor(data);
+        return Grib2File.scan(new DataView(data_decompressed.buffer));
+    }
+
+    /**
      * @returns A string containing the header information for each message in this file
      */
     toString() {
