@@ -351,6 +351,10 @@ class Grib2MessageHeaders {
         return this.sec1.getReferenceTime();
     }
 
+    getGridDimensions() {
+        return this.sec3.getGridDims();
+    }
+
     getGridParameters() {
         return this.sec3.getGridParameters();
     }
@@ -373,6 +377,14 @@ class Grib2Message {
      */
     getReferenceTime() {
         return this.headers.getReferenceTime();
+    }
+
+    /**
+     * Get the number of grid points in the i and j directions
+     * @returns The grid dimensions in an object
+     */
+    getGridDimensions() {
+        return this.headers.getGridDimensions();
     }
 
     /**
