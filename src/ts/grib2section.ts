@@ -128,6 +128,10 @@ class Grib2GridDefinitionSection extends sectionNumberCheck(Grib2Struct<Grib2Sec
         throw `Grid definition template doesn't appear to have the grid dimensions implemented`;
     }
 
+    getGridParameters() {
+        return this.contents.grid_definition_template.getGridParameters();
+    }
+
     applyScanModeFlags(data: Float32Array) {
         if (!hasScanModeFlags(this.contents.grid_definition_template)) {
             return;

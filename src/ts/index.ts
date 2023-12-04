@@ -350,6 +350,10 @@ class Grib2MessageHeaders {
     getReferenceTime() {
         return this.sec1.getReferenceTime();
     }
+
+    getGridParameters() {
+        return this.sec3.getGridParameters();
+    }
 }
 
 class Grib2Message {
@@ -369,6 +373,14 @@ class Grib2Message {
      */
     getReferenceTime() {
         return this.headers.getReferenceTime();
+    }
+
+    /**
+     * Get the parameters used to construct the grid map projection
+     * @returns The grid parameters in an object
+     */
+    getGridParameters() {
+        return this.headers.getGridParameters();
     }
 }
 
