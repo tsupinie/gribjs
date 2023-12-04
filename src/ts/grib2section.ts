@@ -281,8 +281,9 @@ class Grib2DataSection extends sectionNumberCheck(Grib2Struct<Grib2Section7Conte
         this.checkSectionNumber();
     }
 
-    unpackData(buffer: DataView, offset: number, sec3: Grib2GridDefinitionSection, sec5: Grib2DataRepresentationSection) {
-        return sec5.unpackData(buffer, offset, this.contents.section_length - 5, sec3);
+    unpackData(buffer: DataView, sec3: Grib2GridDefinitionSection, sec5: Grib2DataRepresentationSection) {
+        const header_length = 5;
+        return sec5.unpackData(buffer, this.offset + header_length, this.contents.section_length - header_length, sec3);
     }
 }
 
