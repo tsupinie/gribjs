@@ -262,8 +262,8 @@ class Grib2BitmapSection extends sectionNumberCheck(Grib2Struct<Grib2Section6Con
     }
 
     async unpackData(buffer: DataView, decoded_data: Float32Array, expected_size: number) {
-        const header_length = 6
-        if (this.contents.section_length == header_length) return decoded_data;
+        const header_length = 6;
+        if (this.contents.section_length == header_length) return decoded_data; // No bitmap, so just return the input data
 
         const bitmap = new Uint8Array(buffer.buffer.slice(this.offset + header_length, this.offset + this.contents.section_length - header_length));
         return applyBitmap(bitmap, decoded_data, expected_size);
