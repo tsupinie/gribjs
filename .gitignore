@@ -1,5 +1,6 @@
 *.c.o
 *.wasm
+src/compiled/grib_compression.js
 
 node_modules/
 public/*.grib2

@@ -205,4 +205,34 @@ async function complexSDPackingDecoder(compressed: Uint8Array, expected_size: nu
     return decompressed;
 }
 
-export {pngDecoder, jpegDecoder, complexPackingDecoder, complexSDPackingDecoder};
+async function applyBitmap(bitmap: Uint8Array, data: Float32Array, expected_size: number) {
+    if (compression === null) {
+        compression = await compression_module();
+    }
+
+    const bitmap_decoder = compression.cwrap('apply_bitmap', 'number', ['number', 'number', 'number', 'number']);
+
+    const bitmap_ = compression._malloc(bitmap.byteLength);
+    bitmap.forEach((v, i) => compression.setValue(bitmap_ + i, v, 'i8'));
+
+    const data_input_ = compression._malloc(data.byteLength);
+    data.forEach((v, i) => compression.setValue(data_input_ + i * 4, v, 'float'));
+
+    const data_output_ = compression._malloc(expected_size * 4);
+
+    bitmap_decoder(bitmap_, data_input_, data_output_, expected_size);
+
+    const data_output = new Float32Array(expected_size);
+
+    for (let i = 0; i < expected_size; i++) {
+        data_output[i] = compression.getValue(data_output_ + i * 4, 'float');
+    }
+
+    compression._free(bitmap_);
+    compression._free(data_input_);
+    compression._free(data_output_);
+
+    return data_output;
+}
+
+export {pngDecoder, jpegDecoder, complexPackingDecoder, complexSDPackingDecoder, applyBitmap};

@@ -5,6 +5,7 @@ import { DataRepresentationDefinition, g2_section5_template_unpackers } from "./
 import { GridDefinition, ScanModeFlags, hasNiNj, hasScanModeFlags, section3_template_unpackers } from "./grib2griddefs";
 import { EnsembleSpec, ProductDefinition, SurfaceSpec, TimeAggSpec, g2_section4_template_unpackers, isAnalysisOrForecastProduct, isEnsembleProduct, isHorizontalLayerProduct, isTimeAggProduct } from "./grib2productdefs";
 import { lookupGrib2Parameter } from "./grib2producttables";
+import { applyBitmap } from "./unpack";
 
 type ConstructorWithSectionNumber = Constructor<Grib2Struct<{section_number: number}>>;
 
@@ -235,13 +236,10 @@ class Grib2DataRepresentationSection extends sectionNumberCheck(Grib2Struct<Grib
         this.checkSectionNumber();
     }
 
-    get unpackData() {
-        return (buffer: DataView, offset: number, packed_len: number, sec3: Grib2GridDefinitionSection) => {
-            return this.contents.data_representation_template.unpackData(buffer, offset, packed_len, this.contents.number_of_data_points).then(data => {
-                sec3.applyScanModeFlags(data);
-                return data;
-            });
-        }
+    async unpackData(buffer: DataView, offset: number, packed_len: number, sec3: Grib2GridDefinitionSection) {
+        const data_unpacked = await this.contents.data_representation_template.unpackData(buffer, offset, packed_len, this.contents.number_of_data_points);
+        sec3.applyScanModeFlags(data_unpacked);
+        return data_unpacked;
     }
 }
 
@@ -262,6 +260,14 @@ class Grib2BitmapSection extends sectionNumberCheck(Grib2Struct<Grib2Section6Con
         super(contents, offset);
         this.checkSectionNumber();
     }
+
+    async unpackData(buffer: DataView, decoded_data: Float32Array, expected_size: number) {
+        const header_length = 6
+        if (this.contents.section_length == header_length) return decoded_data;
+
+        const bitmap = new Uint8Array(buffer.buffer.slice(this.offset + header_length, this.offset + this.contents.section_length - header_length));
+        return applyBitmap(bitmap, decoded_data, expected_size);
+    }
 }
 
 const g2_section6_unpacker = unpackerFactory(g2_section6_types, Grib2BitmapSection);
@@ -281,9 +287,10 @@ class Grib2DataSection extends sectionNumberCheck(Grib2Struct<Grib2Section7Conte
         this.checkSectionNumber();
     }
 
-    unpackData(buffer: DataView, sec3: Grib2GridDefinitionSection, sec5: Grib2DataRepresentationSection) {
+    async unpackData(buffer: DataView, sec3: Grib2GridDefinitionSection, sec5: Grib2DataRepresentationSection, sec6: Grib2BitmapSection) {
         const header_length = 5;
-        return sec5.unpackData(buffer, this.offset + header_length, this.contents.section_length - header_length, sec3);
+        const data_unpacked = await sec5.unpackData(buffer, this.offset + header_length, this.contents.section_length - header_length, sec3);
+        return sec6.unpackData(buffer, data_unpacked, sec3.contents.grid_size);
     }
 }
 
