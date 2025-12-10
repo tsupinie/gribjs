@@ -17,7 +17,7 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
     const coordinate = lookupGrib2Surface(surface_type);
 
     let print_units = coordinate.surfaceUnits;
-    let print_value = Math.round(value * 1e4) * 1e-4;
+    let print_value = value;
 
     // Convert isobaric surfaces to mb for printing
     if (print_units == 'Pa') {
@@ -25,7 +25,8 @@ function getLayerSpec(surface_type: number, surface_scale_factor: number, surfac
         print_value /= 100;
     }
 
-    const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', print_value.toString()).replace('{surfaceUnits}', print_units);
+    const print_str = print_units == 'Km^2/kg/s' ? value.toExponential(1) : print_value.toFixed(6).replace(/^(\d+(?:\.0*?[1-9]*)?)0*$/, '$1').replace(/\.$/, '');
+    const printable = coordinate.surfacePrintFormat.replace('{surfaceValue}', print_str).replace('{surfaceUnits}', print_units);
 
     return {value: value, surfaceName: coordinate.surfaceName, surfaceUnits: coordinate.surfaceUnits, printable: printable};
 }

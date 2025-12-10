@@ -42,7 +42,7 @@ const surface_table: Record<number, Grib2SurfaceTableEntry> = {
     103: {surfaceName: 'Specified Height Level Above Ground', surfaceUnits: 'm', surfacePrintFormat: '{surfaceValue} {surfaceUnits} above ground'},
     104: {surfaceName: 'Sigma Level', surfaceUnits: '', surfacePrintFormat: '{surfaceValue} sigma level'},
     105: {surfaceName: 'Hybrid Level', surfaceUnits: '', surfacePrintFormat: '{surfaceValue} hybrid level'},
-    106: {surfaceName: 'Depth Below Land Surface', surfaceUnits: 'm', surfacePrintFormat: '{surfaceValue} {surfaceUnits} underground'},
+    106: {surfaceName: 'Depth Below Land Surface', surfaceUnits: 'm', surfacePrintFormat: '{surfaceValue} {surfaceUnits} below ground'},
     107: {surfaceName: 'Isentropic (theta) Level', surfaceUnits: 'K', surfacePrintFormat: '{surfaceValue} {surfaceUnits} isentropic level'},
     108: {surfaceName: 'Level at Specified Pressure Difference from Ground to Level', surfaceUnits: 'Pa', surfacePrintFormat: '{surfaceValue} {surfaceUnits} above ground'},
     109: {surfaceName: 'Potential Vorticity Surface', surfaceUnits: 'Km^2/kg/s', surfacePrintFormat: 'PV={surfaceValue} ({surfaceUnits}) surface'},
